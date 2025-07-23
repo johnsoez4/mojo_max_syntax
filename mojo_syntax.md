@@ -2120,7 +2120,9 @@ project_root/
 │   ├── unit/              # Unit tests
 │   ├── integration/       # Integration tests
 │   └── performance/       # Performance tests
+├── README.md              # Project overview and documentation
 └── mojo_max_syntax/       # Mojo syntax standards and automation
+    ├── README.md          # Syntax tooling overview and usage
     ├── mojo_syntax.md     # This documentation
     └── update_mojo_syntax.mojo # Automation script for syntax validation
 ```
@@ -2321,7 +2323,9 @@ project_root/
 │   ├── unit/
 │   ├── integration/
 │   └── performance/
+├── README.md
 └── mojo_max_syntax/
+    ├── README.md
     ├── mojo_syntax.md
     └── update_mojo_syntax.mojo
 ```
@@ -3824,6 +3828,7 @@ This comprehensive guide delivers:
 ### 🔗 **Cross-References and Resources**
 
 #### **Core Documentation**
+- **📋 Project Overview**: `./mojo_max_syntax/README.md` - Syntax tooling overview, setup, and usage guide
 - **📖 This Document**: `./mojo_max_syntax/mojo_syntax.md` - Complete syntax standards and automation guide
 - **🤖 Automation Script**: `./mojo_max_syntax/update_mojo_syntax.mojo` - Main automation implementation
 - **🧪 Test Suite**: Comprehensive validation and testing framework

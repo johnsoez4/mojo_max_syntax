@@ -17,14 +17,28 @@ The Mojo MAX Syntax project is designed to help developers write idiomatic, perf
 ## 📁 Project Structure
 
 ```
-mojo_max_syntax/
-├── README.md                           # This file - project overview and usage
-├── mojo_syntax.md                      # Comprehensive Mojo syntax reference
-├── update_mojo_syntax.mojo            # Automation script for syntax validation
-├── .augment/                          # Augment AI configuration
-│   └── rules/
-│       └── mojo_syntax_pointer.md     # AI assistant integration rules
-└── LICENSE                            # Project license
+project_root/
+├── src/                    # Main source code directory
+│   ├── __init__.mojo      # Makes src/ a Mojo package
+│   ├── benchmarks/        # Performance measurement modules
+│   ├── control/           # Control system modules
+│   ├── digital_twin/      # Neural network and AI modules
+│   ├── utils/             # Utility and helper modules
+│   └── validation/        # Validation and testing utilities
+├── tests/                 # All test files
+│   ├── src -> ../src      # Symbolic link for imports
+│   ├── unit/              # Unit tests
+│   ├── integration/       # Integration tests
+│   └── performance/       # Performance tests
+├── README.md              # Project overview and documentation
+└── mojo_max_syntax/       # Mojo syntax standards and automation
+    ├── README.md          # This file - syntax tooling overview and usage
+    ├── mojo_syntax.md     # Comprehensive Mojo syntax reference
+    ├── update_mojo_syntax.mojo # Automation script for syntax validation
+    ├── .augment/          # Augment AI configuration
+    │   └── rules/
+    │       └── mojo_syntax_pointer.md # AI assistant integration rules
+    └── LICENSE            # Project license
 ```
 
 ## 📚 Key Components
