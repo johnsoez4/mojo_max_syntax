@@ -2120,17 +2120,18 @@ project_root/
 │   ├── unit/              # Unit tests
 │   ├── integration/       # Integration tests
 │   └── performance/       # Performance tests
-├── mojo_syntax.md         # This documentation
-└── update_mojo_syntax.mojo # Automation script for syntax validation
+└── mojo_max_syntax/       # Mojo syntax standards and automation
+    ├── mojo_syntax.md     # This documentation
+    └── update_mojo_syntax.mojo # Automation script for syntax validation
 ```
 
 **🤖 Automation Support**: Use `update_mojo_syntax.mojo` to validate and maintain compliance with these structure requirements:
 ```bash
 # Validate entire project structure
-mojo update_mojo_syntax.mojo --scan src/
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan src/
 
 # Validate specific files
-mojo update_mojo_syntax.mojo --validate src/utils/gpu_matrix.mojo
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate src/utils/gpu_matrix.mojo
 ```
 
 **❌ AVOID: Extra nesting levels like `src/project_name/`**
@@ -2320,7 +2321,9 @@ project_root/
 │   ├── unit/
 │   ├── integration/
 │   └── performance/
-└── mojo_syntax.md
+└── mojo_max_syntax/
+    ├── mojo_syntax.md
+    └── update_mojo_syntax.mojo
 ```
 
 **❌ INCORRECT Structure (avoid extra nesting):**
@@ -2839,9 +2842,9 @@ The project includes a comprehensive automation script (`update_mojo_syntax.mojo
 
 ```bash
 # Usage examples
-mojo update_mojo_syntax.mojo --scan src/
-mojo update_mojo_syntax.mojo --validate src/utils/gpu_matrix.mojo
-mojo update_mojo_syntax.mojo --fix src/utils/gpu_matrix.mojo --enable-auto-fix
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan src/
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate src/utils/gpu_matrix.mojo
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --fix src/utils/gpu_matrix.mojo --enable-auto-fix
 ```
 
 #### **Pattern Detection Features**
@@ -3063,13 +3066,13 @@ fn matrix_multiply(a: GPUMatrix, b: GPUMatrix) raises -> GPUMatrix:
 
 ```bash
 # 1. Validate current work
-mojo update_mojo_syntax.mojo --validate src/utils/new_feature.mojo
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate src/utils/new_feature.mojo
 
 # 2. Apply automatic fixes
-mojo update_mojo_syntax.mojo --fix src/utils/new_feature.mojo --enable-auto-fix
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --fix src/utils/new_feature.mojo --enable-auto-fix
 
 # 3. Generate project-wide report
-mojo update_mojo_syntax.mojo --scan src/ > compliance_report.txt
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan src/ > compliance_report.txt
 ```
 
 #### **CI/CD Pipeline Integration**
@@ -3078,7 +3081,7 @@ mojo update_mojo_syntax.mojo --scan src/ > compliance_report.txt
 # Example GitHub Actions workflow
 - name: Mojo Syntax Compliance Check
   run: |
-    mojo update_mojo_syntax.mojo --scan src/
+    mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan src/
     if [ $? -ne 0 ]; then
       echo "Syntax compliance issues found"
       exit 1
@@ -3104,7 +3107,7 @@ fi
 COMPLIANCE_FAILED=0
 for file in $STAGED_FILES; do
     echo "Checking $file..."
-    mojo update_mojo_syntax.mojo --validate "$file"
+    mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate "$file"
     if [ $? -ne 0 ]; then
         COMPLIANCE_FAILED=1
     fi
@@ -3112,7 +3115,7 @@ done
 
 if [ $COMPLIANCE_FAILED -eq 1 ]; then
     echo "❌ Syntax compliance issues found. Please fix before committing."
-    echo "Run: mojo update_mojo_syntax.mojo --fix <file> --enable-auto-fix"
+    echo "Run: mojo ./mojo_max_syntax/update_mojo_syntax.mojo --fix <file> --enable-auto-fix"
     exit 1
 fi
 
@@ -3124,31 +3127,31 @@ echo "✅ Syntax compliance check passed"
 **Example 1: Daily Development Workflow**
 ```bash
 # Morning routine: Check project health
-mojo update_mojo_syntax.mojo --scan src/ --summary-only
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan src/ --summary-only
 
 # Before starting new feature
-mojo update_mojo_syntax.mojo --validate src/utils/new_feature.mojo
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate src/utils/new_feature.mojo
 
 # During development: Quick validation
-mojo update_mojo_syntax.mojo --validate-changes --git-diff
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate-changes --git-diff
 
 # Before commit: Final check
-mojo update_mojo_syntax.mojo --pre-commit-check
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --pre-commit-check
 ```
 
 **Example 2: Code Review Process**
 ```bash
 # Generate review-ready compliance report
-mojo update_mojo_syntax.mojo --review-report src/feature/ \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --review-report src/feature/ \
     --output-format markdown \
     --include-suggestions \
     --highlight-critical
 
 # Compare compliance before/after changes
-mojo update_mojo_syntax.mojo --compare-branches main feature/new-gpu-ops
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --compare-branches main feature/new-gpu-ops
 
 # Generate team compliance dashboard
-mojo update_mojo_syntax.mojo --team-dashboard \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --team-dashboard \
     --author-breakdown \
     --trend-analysis \
     --export-html dashboard.html
@@ -3157,23 +3160,23 @@ mojo update_mojo_syntax.mojo --team-dashboard \
 **Example 3: Refactoring Large Codebases**
 ```bash
 # Phase 1: Assessment
-mojo update_mojo_syntax.mojo --deep-scan src/ \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --deep-scan src/ \
     --prioritize-by-impact \
     --generate-refactoring-plan
 
 # Phase 2: Safe automatic fixes
-mojo update_mojo_syntax.mojo --batch-fix src/ \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --batch-fix src/ \
     --safe-fixes-only \
     --create-backups \
     --test-after-fix
 
 # Phase 3: Manual review of complex issues
-mojo update_mojo_syntax.mojo --complex-issues-report src/ \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --complex-issues-report src/ \
     --manual-review-required \
     --include-context
 
 # Phase 4: Validation
-mojo update_mojo_syntax.mojo --validate-refactoring \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate-refactoring \
     --before-snapshot baseline.json \
     --ensure-functionality-preserved
 ```
@@ -3208,19 +3211,19 @@ Trend Analysis (Last 30 days):
 **Automated Reporting**
 ```bash
 # Generate weekly compliance report
-mojo update_mojo_syntax.mojo --weekly-report \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --weekly-report \
     --email-team \
     --highlight-improvements \
     --action-items
 
 # Create compliance badges for README
-mojo update_mojo_syntax.mojo --generate-badges \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --generate-badges \
     --compliance-score \
     --gpu-patterns-verified \
     --last-updated
 
 # Export metrics for external monitoring
-mojo update_mojo_syntax.mojo --export-metrics \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --export-metrics \
     --prometheus-format \
     --grafana-dashboard \
     --alert-thresholds
@@ -3250,13 +3253,13 @@ quality_gates:
 **Monitoring Alerts**
 ```bash
 # Set up compliance monitoring alerts
-mojo update_mojo_syntax.mojo --setup-monitoring \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --setup-monitoring \
     --slack-webhook "https://hooks.slack.com/..." \
     --alert-on-regression \
     --daily-summary
 
 # Configure CI/CD quality gates
-mojo update_mojo_syntax.mojo --ci-quality-gate \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --ci-quality-gate \
     --fail-on-errors \
     --warn-on-regression \
     --block-critical-violations
@@ -3391,25 +3394,25 @@ fn check_documentation_quality(self, file_content: String, file_path: String) ->
 **Batch Processing with Progress Tracking**
 ```bash
 # Process multiple files with progress reporting
-mojo update_mojo_syntax.mojo --batch-scan src/ --progress --output-format json
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --batch-scan src/ --progress --output-format json
 
 # Generate compliance trend analysis
-mojo update_mojo_syntax.mojo --trend-analysis --baseline baseline.json --current current.json
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --trend-analysis --baseline baseline.json --current current.json
 
 # Export results for external tools
-mojo update_mojo_syntax.mojo --export-csv compliance_data.csv --export-json compliance_data.json
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --export-csv compliance_data.csv --export-json compliance_data.json
 ```
 
 **Integration with External Tools**
 ```bash
 # Generate reports for code review tools
-mojo update_mojo_syntax.mojo --github-annotations src/
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --github-annotations src/
 
 # Create IDE-compatible problem markers
-mojo update_mojo_syntax.mojo --vscode-problems src/ > .vscode/problems.json
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --vscode-problems src/ > .vscode/problems.json
 
 # Integration with static analysis tools
-mojo update_mojo_syntax.mojo --sonarqube-format src/ > sonarqube-issues.xml
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --sonarqube-format src/ > sonarqube-issues.xml
 ```
 
 **Custom Configuration Support**
@@ -3451,13 +3454,13 @@ exclusions:
 **Multi-Project Management**
 ```bash
 # Manage compliance across multiple projects
-mojo update_mojo_syntax.mojo --multi-project \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --multi-project \
     --projects "pendulum,neural-engine,control-system" \
     --unified-dashboard \
     --cross-project-standards
 
 # Synchronize standards across teams
-mojo update_mojo_syntax.mojo --sync-standards \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --sync-standards \
     --master-config central-standards.yaml \
     --distribute-to-teams \
     --version-control
@@ -3466,13 +3469,13 @@ mojo update_mojo_syntax.mojo --sync-standards \
 **Advanced Analytics**
 ```bash
 # Generate executive compliance reports
-mojo update_mojo_syntax.mojo --executive-report \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --executive-report \
     --business-impact-analysis \
     --roi-calculation \
     --risk-assessment
 
 # Code quality predictions
-mojo update_mojo_syntax.mojo --predictive-analysis \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --predictive-analysis \
     --maintenance-cost-projection \
     --technical-debt-forecast \
     --team-productivity-impact
@@ -3517,14 +3520,14 @@ integrations:
 **Performance Optimization**
 ```bash
 # Optimize automation for large codebases
-mojo update_mojo_syntax.mojo --performance-mode \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --performance-mode \
     --parallel-processing \
     --incremental-analysis \
     --cache-results \
     --memory-efficient
 
 # Distributed processing for enterprise scale
-mojo update_mojo_syntax.mojo --distributed \
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --distributed \
     --worker-nodes 4 \
     --load-balancing \
     --fault-tolerance
@@ -3546,13 +3549,13 @@ mojo update_mojo_syntax.mojo --distributed \
 2. **Validate Automation Script**
    ```bash
    # Test the automation script
-   mojo update_mojo_syntax.mojo
+   mojo ./mojo_max_syntax/update_mojo_syntax.mojo
    ```
 
 3. **Run Initial Assessment**
    ```bash
    # Generate baseline compliance report
-   mojo update_mojo_syntax.mojo --scan src/ > initial_compliance_report.txt
+   mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan src/ > initial_compliance_report.txt
    ```
 
 #### **Team Training Process**
@@ -3567,7 +3570,7 @@ mojo update_mojo_syntax.mojo --distributed \
 #### **Phase 1: Awareness (Week 1)**
 - **Goal**: Team understands standards and automation capabilities
 - **Activities**:
-  - Team review of `mojo_syntax.md`
+  - Team review of `./mojo_max_syntax/mojo_syntax.md`
   - Demonstration of automation script
   - Initial compliance assessment
 - **Success Criteria**: All team members can run automation script
@@ -3713,11 +3716,11 @@ Solution: Enhance GPU consistency checking
 
 ```bash
 # Run with detailed output for debugging
-mojo update_mojo_syntax.mojo --validate file.mojo --verbose
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate file.mojo --verbose
 
 # Check specific pattern types
-mojo update_mojo_syntax.mojo --check-imports file.mojo
-mojo update_mojo_syntax.mojo --check-gpu-patterns file.mojo
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --check-imports file.mojo
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --check-gpu-patterns file.mojo
 ```
 
 #### **Manual Pattern Testing**
@@ -3734,17 +3737,17 @@ for violation in violations:
 
 ```bash
 # Generate detailed compliance breakdown
-mojo update_mojo_syntax.mojo --detailed-report src/
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --detailed-report src/
 
 # Compare before/after compliance scores
-mojo update_mojo_syntax.mojo --compare baseline.txt current.txt
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --compare baseline.txt current.txt
 ```
 
 ### 📞 **Getting Help**
 
 #### **Internal Resources**
-- **Documentation**: This file (`mojo_syntax.md`)
-- **Automation Script**: `update_mojo_syntax.mojo` with built-in help
+- **Documentation**: This file (`./mojo_max_syntax/mojo_syntax.md`)
+- **Automation Script**: `./mojo_max_syntax/update_mojo_syntax.mojo` with built-in help
 - **Examples**: Before/after transformation examples in this document
 
 #### **Team Support**
@@ -3821,8 +3824,8 @@ This comprehensive guide delivers:
 ### 🔗 **Cross-References and Resources**
 
 #### **Core Documentation**
-- **📖 This Document**: `mojo_syntax.md` - Complete syntax standards and automation guide
-- **🤖 Automation Script**: `update_mojo_syntax.mojo` - Main automation implementation
+- **📖 This Document**: `./mojo_max_syntax/mojo_syntax.md` - Complete syntax standards and automation guide
+- **🤖 Automation Script**: `./mojo_max_syntax/update_mojo_syntax.mojo` - Main automation implementation
 - **🧪 Test Suite**: Comprehensive validation and testing framework
 - **💾 Memory System**: `code_assistant_memories.md` - Memory #3 (Import Path Management)
 
@@ -3922,7 +3925,7 @@ This section contains key insights and guidelines derived from development exper
 - For Mojo codebase cleanup: KEEP core production files in src/, essential utilities, tests in tests/ directories, working demos and benchmarks; DELETE duplicate implementations, experimental files, temporary development files like test_*_simple.mojo if better versions exist, outdated approaches, and broken/non-functional files.
 
 ### **Mojo Codebase Standardization**
-- Use `update_mojo_syntax.mojo` automation script to systematically review and correct Mojo syntax issues across all task list items for design pattern compliance.
+- Use `./mojo_max_syntax/update_mojo_syntax.mojo` automation script to systematically review and correct Mojo syntax issues across all task list items for design pattern compliance.
 - For Mojo standardization: systematically address documentation enhancement (comprehensive docstrings with purpose, parameters, returns, examples, errors), error handling refinement (add raises annotations, convert bare except clauses), and GPU simulation label updates (review SIMULATED/PLACEHOLDER/MOCK labels for accuracy) while verifying compilation after each area.
 
 ### **Mojo Syntax Automation**

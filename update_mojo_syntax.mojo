@@ -6,10 +6,10 @@ according to the patterns documented in mojo_syntax.md. It can scan files for vi
 suggest corrections, apply automatic fixes, and generate compliance reports.
 
 Usage:
-    mojo update_mojo_syntax.mojo --scan [directory]
-    mojo update_mojo_syntax.mojo --fix [file]
-    mojo update_mojo_syntax.mojo --validate [file]
-    mojo update_mojo_syntax.mojo --report [directory]
+    mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan [directory]
+    mojo ./mojo_max_syntax/update_mojo_syntax.mojo --fix [file]
+    mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate [file]
+    mojo ./mojo_max_syntax/update_mojo_syntax.mojo --report [directory]
 
 Features:
 - Pattern detection for common syntax violations
