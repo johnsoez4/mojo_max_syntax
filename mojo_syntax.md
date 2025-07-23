@@ -3919,7 +3919,7 @@ This section contains key insights and guidelines derived from development exper
 - For Mojo design patterns: prefer Copyable/Movable traits over explicit __copyinit__/__moveinit__ methods when default behavior is sufficient.
 
 ### **Mojo Codebase Cleanup**
-- For Mojo codebase cleanup: KEEP core production files in src/pendulum/, essential utilities, tests in tests/ directories, working demos and benchmarks; DELETE duplicate implementations, experimental files, temporary development files like test_*_simple.mojo if better versions exist, outdated approaches, and broken/non-functional files.
+- For Mojo codebase cleanup: KEEP core production files in src/, essential utilities, tests in tests/ directories, working demos and benchmarks; DELETE duplicate implementations, experimental files, temporary development files like test_*_simple.mojo if better versions exist, outdated approaches, and broken/non-functional files.
 
 ### **Mojo Codebase Standardization**
 - Use `update_mojo_syntax.mojo` automation script to systematically review and correct Mojo syntax issues across all task list items for design pattern compliance.
