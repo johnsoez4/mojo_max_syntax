@@ -1,0 +1,26 @@
+# Mojo build artifacts
+*.o
+*.so
+*.dylib
+*.dll
+build/
+dist/
+
+# Backup files from automation script
+*.backup
+*.bak
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test outputs
+test_results/
+compliance_reports/
+*.log
