@@ -35,6 +35,9 @@ This file serves as the centralized guide for Mojo language best practices and s
 24. [Troubleshooting Common Issues](#troubleshooting-common-issues)
 25. [Cross-References](#cross-references)
 
+### **🧠 Development Experience**
+26. [Augment Memories](#augment-memories)
+
 ---
 
 ## 🔧 Version Commands & Environment
@@ -3902,6 +3905,37 @@ Planned additions to this reference:
 - [ ] **Advanced MAX Engine patterns** for multi-GPU operations
 - [ ] **GPU profiling and optimization** techniques
 - [ ] **MAX Engine debugging** and troubleshooting patterns
+
+---
+
+## 🧠 Augment Memories
+
+This section contains key insights and guidelines derived from development experience and user preferences for Mojo programming patterns.
+
+### **Mojo Development Guidelines**
+- For Mojo command-line argument parsing, use 'from sys import argv' and 'args = argv()' to get command-line arguments as an iterable collection.
+- In Mojo, abs, max, and min functions are builtin and don't need to be imported from math module, and 'from time import now' is not required/available.
+- For Mojo main() functions in modules: include main() functions in benchmark/test/demo scripts for standalone execution - compiler warnings about main() in packages are acceptable design patterns.
+- For Mojo design patterns: prefer Copyable/Movable traits over explicit __copyinit__/__moveinit__ methods when default behavior is sufficient.
+
+### **Mojo Codebase Cleanup**
+- For Mojo codebase cleanup: KEEP core production files in src/pendulum/, essential utilities, tests in tests/ directories, working demos and benchmarks; DELETE duplicate implementations, experimental files, temporary development files like test_*_simple.mojo if better versions exist, outdated approaches, and broken/non-functional files.
+
+### **Mojo Codebase Standardization**
+- Use `update_mojo_syntax.mojo` automation script to systematically review and correct Mojo syntax issues across all task list items for design pattern compliance.
+- For Mojo standardization: systematically address documentation enhancement (comprehensive docstrings with purpose, parameters, returns, examples, errors), error handling refinement (add raises annotations, convert bare except clauses), and GPU simulation label updates (review SIMULATED/PLACEHOLDER/MOCK labels for accuracy) while verifying compilation after each area.
+
+### **Mojo Syntax Automation**
+- For Mojo syntax automation: docstring quality should evaluate full multi-line content not just first line length, struct trait detection should handle existing traits and inheritance properly, and comprehensive docstrings with concise opening lines should not be flagged as brief.
+
+### **Mojo Documentation Standards**
+- For Mojo documentation standards: avoid code examples in docstrings by default due to Mojo LSP parsing issues that cause IDE warnings, focus on comprehensive descriptions with Args/Returns/Raises sections instead.
+
+### **Mojo Testing**
+- User prefers real functional tests over simulated test results and questions the validity of test suites that appear to simulate rather than actually test module functionality.
+
+### **Mojo Error Handling Documentation**
+- For Mojo error handling documentation: use bare `raise` statements to preserve original exceptions, document exception propagation patterns with `raises` annotations, replace Python-style examples with correct Mojo syntax, and provide resource cleanup patterns equivalent to Python's `finally` blocks.
 
 ---
 
