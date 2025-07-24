@@ -1310,6 +1310,11 @@ struct MojoSyntaxChecker(Copyable, Movable):
         """
         Check if a struct has appropriate traits or needs them based on conservative principles.
 
+        This function performs sophisticated trait interaction analysis, detecting when:
+        - Structs with existing traits have trivial methods that could be replaced
+        - Structs could benefit from complementary traits (e.g., adding Movable when has Copyable)
+        - Both traits would be beneficial when trivial implementations exist
+
         Args:
             struct_line: The struct declaration line.
             struct_body: The body of the struct for analysis.
@@ -1317,51 +1322,64 @@ struct MojoSyntaxChecker(Copyable, Movable):
         Returns:
             Tuple of (has_appropriate_traits, should_suggest_traits).
             - has_appropriate_traits: True if struct traits are appropriate or not needed
-            - should_suggest_traits: True only if there's a compelling reason to add traits.
+            - should_suggest_traits: True only if there's a compelling reason to add/modify traits.
         """
-        # Check if struct already has traits
-        has_traits = False
-        if "(" in struct_line and ")" in struct_line:
-            # Extract traits section
-            start_paren = struct_line.find("(")
-            end_paren = struct_line.find(")")
-            if start_paren != -1 and end_paren != -1:
-                traits_section = struct_line[start_paren + 1 : end_paren]
-                # Check for any traits
-                if (
-                    "Copyable" in traits_section
-                    or "Movable" in traits_section
-                    or "CollectionElement" in traits_section
-                    or "Stringable" in traits_section
-                    or len(traits_section.strip()) > 0
-                ):
-                    has_traits = True
+        # Parse struct definition to extract existing traits
+        struct_info = self._parse_struct_definition(struct_line)
+        has_copyable = struct_info.has_copyable
+        has_movable = struct_info.has_movable
 
-        # If struct already has traits, it's appropriate
-        if has_traits:
-            return (True, False)
+        # Analyze lifecycle methods in struct body using sophisticated detection
+        lifecycle_analysis = self._analyze_lifecycle_methods(struct_body)
 
-        # Conservative approach: Only suggest traits if there's a compelling reason
+        # Conservative approach: Only suggest changes when there's compelling evidence
         should_suggest = False
 
-        # Check for existing trivial __copyinit__ or __moveinit__ methods
-        has_trivial_copyinit = False
-        has_trivial_moveinit = False
+        # Scenario 1: Struct has both traits but contains trivial methods (redundant methods)
+        if has_copyable and has_movable:
+            if (
+                lifecycle_analysis.has_trivial_copyinit
+                or lifecycle_analysis.has_trivial_moveinit
+            ):
+                # Suggest removing redundant methods, not adding traits
+                # This is handled by _analyze_struct_traits, so we don't suggest trait changes here
+                should_suggest = False
+            # Struct with both traits is appropriately configured
+            return (True, should_suggest)
 
-        for line in struct_body:
-            if "fn __copyinit__" in line:
-                # This would be caught by the existing trivial copyinit detection
-                has_trivial_copyinit = True
-            elif "fn __moveinit__" in line:
-                # Similar logic for moveinit
-                has_trivial_moveinit = True
+        # Scenario 2: Struct has Copyable but could benefit from Movable
+        elif has_copyable and not has_movable:
+            if lifecycle_analysis.has_trivial_moveinit:
+                # Struct has Copyable + trivial __moveinit__ → suggest adding Movable
+                should_suggest = True
+            # Struct with just Copyable is fine if no trivial moveinit
+            return (True, should_suggest)
 
-        # Only suggest traits if replacing existing trivial implementations
-        if has_trivial_copyinit or has_trivial_moveinit:
-            should_suggest = True
+        # Scenario 3: Struct has Movable but could benefit from Copyable
+        elif has_movable and not has_copyable:
+            if lifecycle_analysis.has_trivial_copyinit:
+                # Struct has Movable + trivial __copyinit__ → suggest adding Copyable
+                should_suggest = True
+            # Struct with just Movable is fine if no trivial copyinit
+            return (True, should_suggest)
 
-        # Struct without traits is fine if no compelling reason to add them
-        return (True, should_suggest)
+        # Scenario 4: Struct has neither trait
+        else:
+            # Only suggest traits if there are trivial implementations to replace
+            if (
+                lifecycle_analysis.has_trivial_copyinit
+                and lifecycle_analysis.has_trivial_moveinit
+            ):
+                # Both trivial methods → suggest both traits
+                should_suggest = True
+            elif (
+                lifecycle_analysis.has_trivial_copyinit
+                or lifecycle_analysis.has_trivial_moveinit
+            ):
+                # One trivial method → suggest corresponding trait
+                should_suggest = True
+            # Struct without traits is fine if no trivial methods to replace
+            return (True, should_suggest)
 
     fn check_documentation_patterns(
         self, file_content: String, file_path: String
@@ -1465,19 +1483,92 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
                 # Only create observation if there's a compelling reason to suggest traits
                 if should_suggest_traits:
+                    # Generate specific suggestion based on current trait configuration
+                    struct_info = self._parse_struct_definition(String(line))
+                    struct_body = self._extract_struct_body(lines, i)
+                    lifecycle_analysis = self._analyze_lifecycle_methods(
+                        struct_body
+                    )
+
+                    # Determine specific trait enhancement suggestion
+                    description = ""
+                    suggestion = ""
+
+                    if struct_info.has_copyable and not struct_info.has_movable:
+                        if lifecycle_analysis.has_trivial_moveinit:
+                            description = (
+                                "Struct with Copyable trait has trivial"
+                                " __moveinit__ method"
+                            )
+                            suggestion = (
+                                "Add Movable trait and remove trivial"
+                                " __moveinit__ method for cleaner code"
+                            )
+                    elif (
+                        struct_info.has_movable and not struct_info.has_copyable
+                    ):
+                        if lifecycle_analysis.has_trivial_copyinit:
+                            description = (
+                                "Struct with Movable trait has trivial"
+                                " __copyinit__ method"
+                            )
+                            suggestion = (
+                                "Add Copyable trait and remove trivial"
+                                " __copyinit__ method for cleaner code"
+                            )
+                    elif (
+                        not struct_info.has_copyable
+                        and not struct_info.has_movable
+                    ):
+                        if (
+                            lifecycle_analysis.has_trivial_copyinit
+                            and lifecycle_analysis.has_trivial_moveinit
+                        ):
+                            description = (
+                                "Struct has trivial lifecycle methods that"
+                                " could be replaced with traits"
+                            )
+                            suggestion = (
+                                "Replace explicit __copyinit__/__moveinit__"
+                                " methods with (Copyable, Movable) traits"
+                            )
+                        elif lifecycle_analysis.has_trivial_copyinit:
+                            description = (
+                                "Struct has trivial __copyinit__ method that"
+                                " could be replaced with trait"
+                            )
+                            suggestion = (
+                                "Replace explicit __copyinit__ method with"
+                                " Copyable trait"
+                            )
+                        elif lifecycle_analysis.has_trivial_moveinit:
+                            description = (
+                                "Struct has trivial __moveinit__ method that"
+                                " could be replaced with trait"
+                            )
+                            suggestion = (
+                                "Replace explicit __moveinit__ method with"
+                                " Movable trait"
+                            )
+
+                    # Fallback to generic message if specific case not handled
+                    if description == "":
+                        description = (
+                            "Struct has trivial lifecycle methods that could be"
+                            " replaced with traits"
+                        )
+                        suggestion = (
+                            "Consider replacing explicit"
+                            " __copyinit__/__moveinit__ methods with"
+                            " appropriate traits"
+                        )
+
                     violation = SyntaxViolation(
                         file_path,
                         line_num,
                         "struct_traits_enhancement",
-                        (
-                            "Struct has trivial lifecycle methods that could be"
-                            " replaced with traits"
-                        ),
-                        (
-                            "Consider replacing explicit"
-                            " __copyinit__/__moveinit__ methods with (Copyable,"
-                            " Movable) traits for cleaner code"
-                        ),
+                        description,
+                        suggestion,
                         "observation",
                     )
                     violations.append(violation)
