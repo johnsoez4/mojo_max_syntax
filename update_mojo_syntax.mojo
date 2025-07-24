@@ -2495,7 +2495,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
             entries = directory.listdir()
 
             for i in range(len(entries)):
-                entry_path = entries[i]
+                entry_name = entries[i]
+                # Construct full path by joining directory with entry name
+                entry_path = directory / entry_name.path
 
                 if entry_path.is_dir():
                     # Recursively scan subdirectories
