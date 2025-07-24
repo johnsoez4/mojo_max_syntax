@@ -1317,7 +1317,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
         Returns:
             Tuple of (has_appropriate_traits, should_suggest_traits).
             - has_appropriate_traits: True if struct traits are appropriate or not needed
-            - should_suggest_traits: True only if there's a compelling reason to add traits
+            - should_suggest_traits: True only if there's a compelling reason to add traits.
         """
         # Check if struct already has traits
         has_traits = False
