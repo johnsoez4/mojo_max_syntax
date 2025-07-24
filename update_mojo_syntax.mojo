@@ -9,11 +9,18 @@ Usage:
     # If Mojo compiler is not available, first enable the environment:
     pixi shell
 
-    # Then run the automation script:
-    mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan [directory]
-    mojo ./mojo_max_syntax/update_mojo_syntax.mojo --fix [file]
-    mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate [file]
-    mojo ./mojo_max_syntax/update_mojo_syntax.mojo --report [directory]
+    # Command Structure: <script> <COMMAND> <PATH> [OPTIONS]
+    # IMPORTANT: Command and path must come BEFORE optional flags
+
+    # Basic commands:
+    mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan <directory>
+    mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate <file>
+    mojo ./mojo_max_syntax/update_mojo_syntax.mojo --fix <file>
+    mojo ./mojo_max_syntax/update_mojo_syntax.mojo --report <directory>
+
+    # With optional flags (flags must come AFTER command and path):
+    mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate <file> --show-observations
+    mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan <directory> --show-observations
 
 Features:
 - Pattern detection for common syntax violations
@@ -2475,48 +2482,64 @@ fn print_usage():
     print("  If Mojo compiler is not available, first run:")
     print("  pixi shell")
     print("")
-    print("Usage:")
-    print("  mojo update_mojo_syntax.mojo --scan [directory]")
-    print("  mojo update_mojo_syntax.mojo --fix [file]")
-    print("  mojo update_mojo_syntax.mojo --validate [file]")
-    print("  mojo update_mojo_syntax.mojo --report [directory]")
+    print("Command Structure:")
+    print("  mojo update_mojo_syntax.mojo <COMMAND> <PATH> [OPTIONS]")
     print("")
-    print("Options:")
-    print("  --scan [dir]       Scan directory for syntax violations")
-    print("  --fix [file]       Apply automatic fixes to file")
-    print("  --validate [file]  Validate single file compliance")
-    print("  --report [dir]     Generate compliance report")
-    print("  --cleanup [dir]    Clean up backup files in directory")
-    print("  --enable-auto-fix  Enable automatic fixing (with backups)")
-    print("  --disable-backup   Disable backup creation")
-    print("  --keep-backups     Keep backup files after successful completion")
+    print("⚠️  IMPORTANT: Command and path must come BEFORE optional flags!")
+    print("")
+    print("Basic Commands:")
+    print("  mojo update_mojo_syntax.mojo --scan <directory>")
+    print("  mojo update_mojo_syntax.mojo --validate <file>")
+    print("  mojo update_mojo_syntax.mojo --fix <file>")
+    print("  mojo update_mojo_syntax.mojo --report <directory>")
+    print("")
+    print("Commands:")
+    print("  --scan <directory>     Scan directory for syntax violations")
+    print("  --validate <file>      Validate single file compliance")
+    print("  --fix <file>           Apply automatic fixes to file")
+    print("  --report <directory>   Generate compliance report")
+    print("  --cleanup <directory>  Clean up backup files in directory")
+    print("")
+    print("Optional Flags (must come AFTER command and path):")
+    print("  --show-observations    Show suggestions and style recommendations")
+    print("  --enable-auto-fix      Enable automatic fixing (with backups)")
+    print("  --disable-backup       Disable backup creation")
     print(
-        "  --auto-cleanup     Enable automatic cleanup of backup files"
+        "  --keep-backups         Keep backup files after successful completion"
+    )
+    print(
+        "  --auto-cleanup         Enable automatic cleanup of backup files"
         " (default)"
     )
     print(
-        "  --retention-days N Set backup retention period in days (default: 7)"
+        "  --retention-days N     Set backup retention period in days"
+        " (default: 7)"
     )
-    print("  --show-observations Show suggestions and style recommendations")
     print(
         "  --check-docstring-code Enable syntax checking within docstring code"
         " examples"
     )
-    print("  --help             Show this help message")
+    print("  --help                 Show this help message")
     print("")
-    print("Examples:")
+    print("✅ Correct Usage Examples:")
     print("  # Enable Mojo environment first (if needed)")
     print("  pixi shell")
     print("")
-    print("  # Then run syntax automation commands")
+    print("  # Basic commands (command and path first)")
     print("  mojo update_mojo_syntax.mojo --scan src/")
+    print("  mojo update_mojo_syntax.mojo --validate src/utils/gpu_matrix.mojo")
+    print("")
+    print("  # With optional flags (flags come AFTER command and path)")
     print(
-        "  mojo update_mojo_syntax.mojo --validate"
-        " src/pendulum/utils/gpu_matrix.mojo"
+        "  mojo update_mojo_syntax.mojo --validate src/utils/gpu_matrix.mojo"
+        " --show-observations"
     )
+    print("  mojo update_mojo_syntax.mojo --scan src/ --show-observations")
+    print("")
+    print("❌ Incorrect Usage (will show help instead):")
     print(
-        "  mojo update_mojo_syntax.mojo --validate"
-        " src/utils/gpu_matrix.mojo --show-observations"
+        "  mojo update_mojo_syntax.mojo --show-observations --validate"
+        " src/utils/gpu_matrix.mojo"
     )
     print(
         "  mojo update_mojo_syntax.mojo --fix"
@@ -2656,6 +2679,47 @@ fn main() raises:
     command = String(args[1])
 
     if command == "--help" or command == "-h":
+        print_usage()
+        return
+    elif command == "--show-observations":
+        print(
+            "❌ Error: --show-observations must come AFTER the command and path"
+        )
+        print("")
+        print("✅ Correct usage:")
+        print(
+            "  mojo update_mojo_syntax.mojo --validate <file>"
+            " --show-observations"
+        )
+        print("")
+        print("❌ What you tried:")
+        print(
+            "  mojo update_mojo_syntax.mojo --show-observations --validate"
+            " <file>"
+        )
+        print("")
+        print_usage()
+        return
+    elif command == "--enable-auto-fix":
+        print("❌ Error: --enable-auto-fix must come AFTER the command and path")
+        print("")
+        print("✅ Correct usage:")
+        print("  mojo update_mojo_syntax.mojo --fix <file> --enable-auto-fix")
+        print("")
+        print_usage()
+        return
+    elif (
+        command.startswith("--")
+        and command != "--scan"
+        and command != "--validate"
+        and command != "--fix"
+        and command != "--report"
+        and command != "--cleanup"
+    ):
+        print("❌ Error: Optional flags must come AFTER the command and path")
+        print("")
+        print("✅ Command structure: <script> <COMMAND> <PATH> [OPTIONS]")
+        print("")
         print_usage()
         return
     elif command == "--scan":
