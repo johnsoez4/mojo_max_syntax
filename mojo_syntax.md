@@ -71,6 +71,13 @@ max --version
 # Verify Mojo installation
 mojo -v
 
+# If Mojo compiler is not found, enable it using pixi shell
+# This activates the Mojo environment in the current shell
+pixi shell
+
+# After pixi shell, verify Mojo installation again
+mojo -v
+
 # Verify MAX Engine installation
 max --version
 
@@ -2846,6 +2853,9 @@ The project includes a comprehensive automation script (`update_mojo_syntax.mojo
 #### **Script Capabilities**
 
 ```bash
+# If Mojo compiler is not available, first enable the environment
+pixi shell
+
 # Usage examples
 mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan src/
 mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate src/utils/gpu_matrix.mojo
@@ -3651,6 +3661,32 @@ mojo ./mojo_max_syntax/update_mojo_syntax.mojo --distributed \
 ## 🔧 Troubleshooting Common Issues
 
 ### ❌ **Common Problems and Solutions**
+
+#### **Mojo Compiler Environment Issues**
+
+**Problem**: `mojo` command not found
+```bash
+# Error: Command 'mojo' not found, but can be installed with: sudo snap install mojo
+```
+
+**Solution**: Enable Mojo environment using pixi shell
+```bash
+# Step 1: Activate the Mojo environment
+pixi shell
+
+# Step 2: Verify Mojo is now available
+mojo -v
+
+# Step 3: Run your Mojo commands
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan src/
+```
+
+**Problem**: Mojo environment not persisting across terminal sessions
+```
+Solution: Always run pixi shell before using Mojo commands
+- Add pixi shell to your shell startup script if needed
+- Or run pixi shell at the beginning of each development session
+```
 
 #### **Automation Script Issues**
 

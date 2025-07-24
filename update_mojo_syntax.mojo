@@ -6,6 +6,10 @@ according to the patterns documented in mojo_syntax.md. It can scan files for vi
 suggest corrections, apply automatic fixes, and generate compliance reports.
 
 Usage:
+    # If Mojo compiler is not available, first enable the environment:
+    pixi shell
+
+    # Then run the automation script:
     mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan [directory]
     mojo ./mojo_max_syntax/update_mojo_syntax.mojo --fix [file]
     mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate [file]
@@ -2467,6 +2471,10 @@ fn print_usage():
     print("Mojo Syntax Automation Script")
     print("=" * 50)
     print("")
+    print("Environment Setup:")
+    print("  If Mojo compiler is not available, first run:")
+    print("  pixi shell")
+    print("")
     print("Usage:")
     print("  mojo update_mojo_syntax.mojo --scan [directory]")
     print("  mojo update_mojo_syntax.mojo --fix [file]")
@@ -2497,6 +2505,10 @@ fn print_usage():
     print("  --help             Show this help message")
     print("")
     print("Examples:")
+    print("  # Enable Mojo environment first (if needed)")
+    print("  pixi shell")
+    print("")
+    print("  # Then run syntax automation commands")
     print("  mojo update_mojo_syntax.mojo --scan src/")
     print(
         "  mojo update_mojo_syntax.mojo --validate"
@@ -2595,6 +2607,11 @@ fn main() raises:
     """Main entry point for the Mojo syntax automation script."""
     print("🤖 Mojo Syntax Automation Script v1.0")
     print("Standardizing Mojo code according to mojo_syntax.md patterns")
+    print("")
+    print(
+        "💡 Note: If you encounter 'mojo command not found', run 'pixi shell'"
+        " first"
+    )
     print("")
 
     # Initialize syntax checker
