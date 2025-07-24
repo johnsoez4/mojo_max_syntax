@@ -2,6 +2,27 @@
 
 This file serves as the centralized guide for Mojo language best practices and syntax standards. All Mojo code creation and modification should reference this file to ensure consistent, idiomatic code.
 
+## 🔥 Mojo File Extensions
+
+Mojo supports two file extensions for source code files:
+
+- **`.mojo`** - Standard file extension (recommended for most use cases)
+- **`.🔥`** - Emoji file extension (alternative, uses the fire emoji)
+
+Both extensions are functionally identical and follow the same syntax rules. The automation script processes both file types with identical validation and compliance checking.
+
+**Examples:**
+```bash
+# Both of these are valid Mojo source files
+src/utils/matrix_operations.mojo
+src/utils/matrix_operations.🔥
+
+# The automation script discovers and processes both
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan src/
+```
+
+**Note**: While both extensions are supported, it's recommended to use `.mojo` for better compatibility with text editors and development tools that may not handle emoji file extensions properly.
+
 ## 📋 Table of Contents
 
 ### **Core Syntax Standards**
@@ -290,22 +311,22 @@ struct Resource(Copyable, Movable):
 ```mojo
 # ✅ PREFERRED: Simple data struct with automatic initialization
 @fieldwise_init
-struct PendulumState(Copyable, Movable):
-    """Complete state of the pendulum system."""
-    var cart_position: Float64
-    var cart_velocity: Float64
-    var pendulum_angle: Float64
-    var pendulum_velocity: Float64
-    var control_force: Float64
+struct SystemState(Copyable, Movable):
+    """Complete state of the system."""
+    var position: Float64
+    var velocity: Float64
+    var angle: Float64
+    var angular_velocity: Float64
+    var control_input: Float64
     var timestamp: Float64
 
 # Usage: Automatic constructor with named parameters
-var state = PendulumState(
-    cart_position=0.0,
-    cart_velocity=0.0,
-    pendulum_angle=0.1,
-    pendulum_velocity=0.0,
-    control_force=0.0,
+var state = SystemState(
+    position=0.0,
+    velocity=0.0,
+    angle=0.1,
+    angular_velocity=0.0,
+    control_input=0.0,
     timestamp=0.0
 )
 ```
@@ -1748,7 +1769,7 @@ This pattern resolves the common compilation error:
 cannot implicitly convert 'SIMD[float32, __init__[::Origin[::Bool(IntTuple(1), IntTuple(1)).size:]' value to 'SIMD[float32, 1]'
 ```
 
-**Related Files**: `src/utils/gpu_utils.mojo`, `src/utils/gpu_matrix.mojo`, `src/digital_twin/gpu_neural_network.mojo`
+**Related Files**: `src/utils/gpu_utils.mojo`, `src/utils/gpu_matrix.mojo`, `src/module/gpu_neural_network.mojo`
 
 ---
 
@@ -2120,7 +2141,7 @@ project_root/
 │   ├── __init__.mojo      # Makes src/ a Mojo package
 │   ├── benchmarks/        # Performance measurement modules
 │   ├── control/           # Control system modules
-│   ├── digital_twin/      # Neural network and AI modules
+│   ├── module/            # Core application modules
 │   ├── utils/             # Utility and helper modules
 │   └── validation/        # Validation and testing utilities
 ├── tests/                 # All test files
@@ -2141,11 +2162,11 @@ project_root/
 mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan src/
 
 # Validate specific files
-mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate src/utils/gpu_matrix.mojo
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate src/utils/matrix_operations.mojo
 ```
 
 **❌ AVOID: Extra nesting levels like `src/project_name/`**
-- Do NOT create `src/pendulum/utils/` - use `src/utils/` directly
+- Do NOT create `src/myproject/utils/` - use `src/utils/` directly
 - Do NOT create `src/project_name/` subdirectories unless you have multiple independent projects
 
 When test files are located in a different directory from their corresponding source code files (e.g., tests in `tests/` directory while source code is in `src/` or root directory), proper organization is essential for reliable test execution and module imports.
@@ -2288,7 +2309,7 @@ ln -s ../../../src src
 cd tests/unit/utils/
 ln -s ../../../src src
 
-cd tests/unit/digital_twin/
+cd tests/unit/module/
 ln -s ../../../src src
 
 # Integration test subdirectories
@@ -2316,14 +2337,14 @@ ln -s ../test_utils test_utils
 
 #### 📁 **Directory Structure Clarification**
 
-**✅ CORRECT Structure for Pendulum Project:**
+**✅ CORRECT Structure for Mojo Projects:**
 ```
 project_root/
 ├── src/
 │   ├── __init__.mojo
 │   ├── benchmarks/
 │   ├── control/
-│   ├── digital_twin/
+│   ├── module/
 │   ├── utils/
 │   └── validation/
 ├── tests/
@@ -2342,15 +2363,15 @@ project_root/
 ```
 project_root/
 ├── src/
-│   └── pendulum/  # ← Unnecessary extra level
+│   └── myproject/  # ← Unnecessary extra level
 │       ├── benchmarks/
 │       ├── control/
 │       └── utils/
 ```
 
 **Import Examples:**
-- ✅ Correct: `from src.utils.gpu_matrix import GPUTensor`
-- ❌ Incorrect: `from src.pendulum.utils.gpu_matrix import GPUTensor`
+- ✅ Correct: `from src.utils.matrix_operations import Tensor`
+- ❌ Incorrect: `from src.myproject.utils.matrix_operations import Tensor`
 
 **Related Files**: `tests/test_utils.mojo`, `tests/test_mojo_threading.mojo`, `tests/run_all_tests.mojo`
 
@@ -2618,7 +2639,7 @@ fn bad_manual_timing():
 
 ### 📋 **GPU Implementation Transparency Requirements**
 
-**CRITICAL**: All GPU-related code in the pendulum project must clearly distinguish between simulated GPU operations (implementation structure/patterns) and actual GPU hardware execution. This ensures transparency and prepares for real MAX Engine GPU implementation.
+**CRITICAL**: All GPU-related code in Mojo projects must clearly distinguish between simulated GPU operations (implementation structure/patterns) and actual GPU hardware execution. This ensures transparency and prepares for real MAX Engine GPU implementation.
 
 ### ✅ **Required Labeling Prefixes**
 
@@ -2725,7 +2746,7 @@ When implementing actual MAX Engine GPU operations:
 4. **Documentation**: Self-documenting code showing implementation status
 5. **Migration**: Smooth transition to real MAX Engine GPU operations
 
-**Related Files**: All GPU-related files in `src/utils/`, `src/digital_twin/`, `tests/`, `src/benchmarks/`
+**Related Files**: All GPU-related files in `src/utils/`, `src/module/`, `tests/`, `src/benchmarks/`
 
 ---
 
@@ -2848,7 +2869,7 @@ When syntax standards evolve:
 
 ### ✅ **Mojo Syntax Automation Script**
 
-The project includes a comprehensive automation script (`update_mojo_syntax.mojo`) that can scan, validate, and automatically fix Mojo syntax violations according to these guidelines.
+The project includes a comprehensive automation script (`update_mojo_syntax.mojo`) that can scan, validate, and automatically fix Mojo syntax violations according to these guidelines. The script processes both `.mojo` and `.🔥` file extensions with identical validation rules.
 
 #### **Script Capabilities**
 
@@ -2856,10 +2877,11 @@ The project includes a comprehensive automation script (`update_mojo_syntax.mojo
 # If Mojo compiler is not available, first enable the environment
 pixi shell
 
-# Usage examples
+# Usage examples - works with both .mojo and .🔥 files
 mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan src/
-mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate src/utils/gpu_matrix.mojo
-mojo ./mojo_max_syntax/update_mojo_syntax.mojo --fix src/utils/gpu_matrix.mojo --enable-auto-fix
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate src/utils/matrix_operations.mojo
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate src/utils/tensor_ops.🔥
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --fix src/utils/matrix_operations.mojo --enable-auto-fix
 ```
 
 #### **Pattern Detection Features**
@@ -2965,7 +2987,7 @@ SUMMARY:
 DETAILED RESULTS:
 --------------------------------------------------------------------------------
 
-File: src/utils/gpu_matrix.mojo
+File: src/utils/matrix_operations.mojo
 Compliance Score: 99.6 %
 Lines: 2545
 Violations: 26
@@ -3007,7 +3029,7 @@ from memory import UnsafePointer
 from sys import has_nvidia_gpu_accelerator
 
 # Project imports with full paths
-from src.pendulum.relative_module import SomeClass
+from src.module.relative_module import SomeClass
 ```
 
 #### **Struct Definition Improvements**
@@ -3080,8 +3102,9 @@ fn matrix_multiply(a: GPUMatrix, b: GPUMatrix) raises -> GPUMatrix:
 #### **Daily Development Usage**
 
 ```bash
-# 1. Validate current work
+# 1. Validate current work (supports both .mojo and .🔥 extensions)
 mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate src/utils/new_feature.mojo
+mojo ./mojo_max_syntax/update_mojo_syntax.mojo --validate src/utils/gpu_kernels.🔥
 
 # 2. Apply automatic fixes
 mojo ./mojo_max_syntax/update_mojo_syntax.mojo --fix src/utils/new_feature.mojo --enable-auto-fix
@@ -3110,8 +3133,8 @@ mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan src/ > compliance_report.t
 #!/bin/bash
 echo "Running Mojo syntax compliance check..."
 
-# Check only staged files for efficiency
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.mojo$')
+# Check only staged files for efficiency (both .mojo and .🔥 extensions)
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(mojo|🔥)$')
 
 if [ -z "$STAGED_FILES" ]; then
     echo "No Mojo files to check"
@@ -3459,7 +3482,9 @@ rules:
 exclusions:
   files:
     - "*/test_*.mojo"
+    - "*/test_*.🔥"
     - "*/legacy/*.mojo"
+    - "*/legacy/*.🔥"
   patterns:
     - "# LEGACY CODE - DO NOT MODIFY"
 ```
@@ -3470,7 +3495,7 @@ exclusions:
 ```bash
 # Manage compliance across multiple projects
 mojo ./mojo_max_syntax/update_mojo_syntax.mojo --multi-project \
-    --projects "pendulum,neural-engine,control-system" \
+    --projects "project-a,project-b,project-c" \
     --unified-dashboard \
     --cross-project-standards
 
@@ -3874,7 +3899,7 @@ This comprehensive guide delivers:
 #### **Implementation Files**
 - **🎯 GPU Matrix**: `src/utils/gpu_matrix.mojo` - Real GPU acceleration patterns
 - **⚡ GPU Utils**: `src/utils/gpu_utils.mojo` - GPU hardware detection and management
-- **🧠 Neural Networks**: `src/digital_twin/gpu_neural_network.mojo` - GPU neural acceleration
+- **🧠 Neural Networks**: `src/module/gpu_neural_network.mojo` - GPU neural acceleration
 - **📊 Benchmarking**: `src/benchmarks/gpu_cpu_benchmark.mojo` - Performance measurement
 - **📈 Reporting**: `src/benchmarks/report_generator.mojo` - Compliance reporting
 
@@ -3894,7 +3919,7 @@ This documentation and automation system provides everything needed for:
 - **✅ Project Evolution**: Adapt and extend standards as project requirements evolve
 - **✅ Enterprise Deployment**: Scale across multiple projects and teams
 
-**The pendulum project now has a world-class Mojo syntax standardization system that maintains real GPU acceleration while ensuring consistent, high-quality code across all 84 source files.**
+**This Mojo syntax standardization system provides world-class automation that maintains real GPU acceleration while ensuring consistent, high-quality code across all source files.**
 - **Project Structure**: `docs/PROJECT_STRUCTURE.md`
 - **Example Files**: `src/mojo/threading_real.mojo`, `src/mojo/mojo_threading_simple.mojo`
 - **Test Examples**: `tests/mojo/simple_threading_test.mojo`

@@ -2412,7 +2412,8 @@ struct MojoSyntaxChecker(Copyable, Movable):
     fn scan_directory(
         mut self, directory_path: String
     ) raises -> List[ComplianceReport]:
-        """Scan all .mojo files in a directory."""
+        """Scan all Mojo source files (.mojo and .🔥) in a directory recursively.
+        """
         reports = List[ComplianceReport]()
 
         print("Scanning directory:", directory_path)
@@ -2422,55 +2423,117 @@ struct MojoSyntaxChecker(Copyable, Movable):
         if directory_path.endswith("/"):
             normalized_path = directory_path[:-1]
 
-        # Known files to scan based on project structure
-        test_files = List[String]()
+        # Discover all Mojo source files recursively
+        mojo_files = List[String]()
+        self._discover_mojo_files(Path(normalized_path), mojo_files)
 
-        # Core GPU files (priority)
-        test_files.append(normalized_path + "/utils/gpu_matrix.mojo")
-        test_files.append(normalized_path + "/utils/gpu_utils.mojo")
-        test_files.append(normalized_path + "/utils/physics.mojo")
-        test_files.append(
-            normalized_path + "/digital_twin/gpu_neural_network.mojo"
-        )
-        test_files.append(
-            normalized_path + "/benchmarks/gpu_cpu_benchmark.mojo"
-        )
-        test_files.append(normalized_path + "/benchmarks/report_generator.mojo")
+        # Sort files alphabetically for consistent output
+        self._sort_file_list(mojo_files)
 
-        # Neural network files
-        test_files.append(normalized_path + "/digital_twin/neural_network.mojo")
-        test_files.append(normalized_path + "/digital_twin/simple_network.mojo")
-        test_files.append(normalized_path + "/digital_twin/trainer.mojo")
-        test_files.append(
-            normalized_path + "/digital_twin/integrated_trainer.mojo"
-        )
+        print("Found", len(mojo_files), "Mojo source files (.mojo and .🔥)")
 
-        # Control system files (core)
-        test_files.append(normalized_path + "/control/ai_controller.mojo")
-        test_files.append(normalized_path + "/control/mpc_controller.mojo")
-        test_files.append(normalized_path + "/control/rl_controller.mojo")
-        test_files.append(normalized_path + "/control/safety_monitor.mojo")
+        # Scan each discovered file
+        for i in range(len(mojo_files)):
+            file_path = mojo_files[i]
+            try:
+                report = self.scan_file(file_path)
+                reports.append(report)
+                print("✅ Scanned:", file_path)
+            except e:
+                # Create error report for files that can't be scanned
+                error_report = ComplianceReport(file_path)
+                violation = SyntaxViolation(
+                    file_path,
+                    0,
+                    "scan_error",
+                    "Failed to scan file due to access error",
+                    "Check file permissions and accessibility",
+                    "error",
+                )
+                error_report.add_violation(violation)
+                reports.append(error_report)
+                print("❌ Error scanning:", file_path, "- scan failed")
 
-        # Data processing files
-        test_files.append(normalized_path + "/data/loader.mojo")
-        test_files.append(normalized_path + "/data/csv_reader.mojo")
-        test_files.append(normalized_path + "/data/analyzer.mojo")
-
-        for i in range(len(test_files)):
-            file_path = test_files[i]
-            # Scan the file
-            report = self.scan_file(file_path)
-            reports.append(report)
-            print("✅ Scanned:", file_path)
-
-        if len(reports) == 0:
-            print("Note: No .mojo files found or accessible in directory")
+        if len(mojo_files) == 0:
             print(
-                "In a full implementation, this would use file system APIs for"
-                " recursive scanning"
+                "Note: No Mojo source files (.mojo or .🔥) found in directory"
+                " tree"
             )
 
         return reports
+
+    fn _discover_mojo_files(
+        self, directory: Path, mut mojo_files: List[String]
+    ) raises:
+        """Recursively discover all Mojo source files (.mojo and .🔥) in a directory tree.
+        """
+        # Skip common non-source directories
+        excluded_dirs = List[String]()
+        excluded_dirs.append(".git")
+        excluded_dirs.append(".pixi")
+        excluded_dirs.append("__pycache__")
+        excluded_dirs.append("build")
+        excluded_dirs.append("dist")
+        excluded_dirs.append(".vscode")
+        excluded_dirs.append(".idea")
+        excluded_dirs.append("node_modules")
+        excluded_dirs.append(".cache")
+        excluded_dirs.append(".tmp")
+        excluded_dirs.append("temp")
+        excluded_dirs.append("tmp")
+
+        try:
+            # Get directory name for exclusion check
+            dir_name = self._get_basename(directory.path)
+
+            # Skip excluded directories
+            for i in range(len(excluded_dirs)):
+                if dir_name == excluded_dirs[i]:
+                    return
+
+            # List directory contents
+            entries = directory.listdir()
+
+            for i in range(len(entries)):
+                entry_path = entries[i]
+
+                if entry_path.is_dir():
+                    # Recursively scan subdirectories
+                    self._discover_mojo_files(entry_path, mojo_files)
+                elif entry_path.is_file():
+                    # Check if it's a Mojo source file (.mojo or .🔥)
+                    file_path_str = entry_path.path
+                    if file_path_str.endswith(
+                        ".mojo"
+                    ) or file_path_str.endswith(".🔥"):
+                        mojo_files.append(file_path_str)
+        except:
+            # Skip directories that can't be accessed (permissions, etc.)
+            pass
+
+    fn _get_basename(self, path: String) -> String:
+        """Get the basename (last component) of a path."""
+        # Find the last occurrence of path separator
+        last_sep = -1
+        for i in range(len(path)):
+            if path[i] == "/" or path[i] == "\\":
+                last_sep = i
+
+        if last_sep == -1:
+            return path
+        else:
+            return path[last_sep + 1 :]
+
+    fn _sort_file_list(self, mut file_list: List[String]):
+        """Sort a list of file paths alphabetically using simple bubble sort."""
+        n = len(file_list)
+        for i in range(n):
+            for j in range(0, n - i - 1):
+                if file_list[j] > file_list[j + 1]:
+                    # Swap elements
+                    temp = file_list[j]
+                    file_list[j] = file_list[j + 1]
+                    file_list[j + 1] = temp
 
 
 fn print_usage():
