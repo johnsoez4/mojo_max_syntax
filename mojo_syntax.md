@@ -37,6 +37,7 @@ This file serves as the centralized guide for Mojo language best practices and s
 
 ### **🧠 Development Experience**
 26. [Augment Memories](#augment-memories)
+27. [Conservative Refactoring Principles](#conservative-refactoring-principles)
 
 ---
 
@@ -3924,7 +3925,7 @@ This section contains key insights and guidelines derived from development exper
 - For Mojo command-line argument parsing, use 'from sys import argv' and 'args = argv()' to get command-line arguments as an iterable collection.
 - In Mojo, abs, max, and min functions are builtin and don't need to be imported from math module, and 'from time import now' is not required/available.
 - For Mojo main() functions in modules: include main() functions in benchmark/test/demo scripts for standalone execution - compiler warnings about main() in packages are acceptable design patterns.
-- For Mojo design patterns: prefer Copyable/Movable traits over explicit __copyinit__/__moveinit__ methods when default behavior is sufficient.
+- For Mojo design patterns: prefer Copyable/Movable traits over explicit __copyinit__/__moveinit__ methods when default behavior is sufficient. However, when refactoring existing code, only add these traits if: (a) replacing existing trivial __copyinit__/__moveinit__ implementations, (b) required by compiler to satisfy new dependencies from other code changes, or (c) the struct is being used in collections and currently fails compilation.
 
 ### **Mojo Codebase Cleanup**
 - For Mojo codebase cleanup: KEEP core production files in src/, essential utilities, tests in tests/ directories, working demos and benchmarks; DELETE duplicate implementations, experimental files, temporary development files like test_*_simple.mojo if better versions exist, outdated approaches, and broken/non-functional files.
@@ -3944,6 +3945,12 @@ This section contains key insights and guidelines derived from development exper
 
 ### **Mojo Error Handling Documentation**
 - For Mojo error handling documentation: use bare `raise` statements to preserve original exceptions, document exception propagation patterns with `raises` annotations, replace Python-style examples with correct Mojo syntax, and provide resource cleanup patterns equivalent to Python's `finally` blocks.
+
+### **Conservative Refactoring Principles**
+- Existing working code should not be modified unless there's a compelling functional need - stability and reliability take precedence over theoretical pattern consistency.
+- Trait additions should be driven by actual usage requirements (compilation failures, collection usage, API requirements) rather than theoretical completeness or pattern uniformity.
+- Prioritize code stability over pattern consistency in mature codebases - working code that follows older but valid patterns should remain unchanged unless modernization provides clear functional benefits.
+- When refactoring for syntax compliance, distinguish between "required fixes" (compilation errors, deprecated patterns) and "optional enhancements" (style preferences, theoretical improvements) - focus effort on required fixes first.
 
 ---
 

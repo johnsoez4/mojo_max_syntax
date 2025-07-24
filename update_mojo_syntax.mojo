@@ -1304,53 +1304,64 @@ struct MojoSyntaxChecker(Copyable, Movable):
             "Multi-line docstring",
         )
 
-    fn check_struct_traits(self, struct_line: String) -> Bool:
+    fn check_struct_traits(
+        self, struct_line: String, struct_body: List[String]
+    ) -> (Bool, Bool):
         """
-        Check if a struct has appropriate traits or doesn't need them.
+        Check if a struct has appropriate traits or needs them based on conservative principles.
+
+        Args:
+            struct_line: The struct declaration line.
+            struct_body: The body of the struct for analysis.
 
         Returns:
-            True if struct traits are appropriate, False if missing and needed.
+            Tuple of (has_appropriate_traits, should_suggest_traits).
+            - has_appropriate_traits: True if struct traits are appropriate or not needed
+            - should_suggest_traits: True only if there's a compelling reason to add traits
         """
         # Check if struct already has traits
+        has_traits = False
         if "(" in struct_line and ")" in struct_line:
             # Extract traits section
             start_paren = struct_line.find("(")
             end_paren = struct_line.find(")")
             if start_paren != -1 and end_paren != -1:
                 traits_section = struct_line[start_paren + 1 : end_paren]
-                # Check for common traits
-                if "Copyable" in traits_section or "Movable" in traits_section:
-                    return True
-                # Check for other valid traits that might not need Copyable/Movable
+                # Check for any traits
                 if (
-                    "CollectionElement" in traits_section
+                    "Copyable" in traits_section
+                    or "Movable" in traits_section
+                    or "CollectionElement" in traits_section
                     or "Stringable" in traits_section
+                    or len(traits_section.strip()) > 0
                 ):
-                    return True
+                    has_traits = True
 
-        # Check if it's a utility struct that might not need traits
-        struct_name = (
-            struct_line.replace("struct ", "")
-            .split("(")[0]
-            .split(":")[0]
-            .strip()
-        )
+        # If struct already has traits, it's appropriate
+        if has_traits:
+            return (True, False)
 
-        # Utility structs that typically don't need Copyable/Movable
-        utility_patterns = [
-            "Config",
-            "Constants",
-            "Utils",
-            "Helper",
-            "Manager",
-            "Builder",
-        ]
-        for pattern in utility_patterns:
-            if pattern in struct_name:
-                return True
+        # Conservative approach: Only suggest traits if there's a compelling reason
+        should_suggest = False
 
-        # If no traits found and not a utility struct, suggest adding them
-        return False
+        # Check for existing trivial __copyinit__ or __moveinit__ methods
+        has_trivial_copyinit = False
+        has_trivial_moveinit = False
+
+        for line in struct_body:
+            if "fn __copyinit__" in line:
+                # This would be caught by the existing trivial copyinit detection
+                has_trivial_copyinit = True
+            elif "fn __moveinit__" in line:
+                # Similar logic for moveinit
+                has_trivial_moveinit = True
+
+        # Only suggest traits if replacing existing trivial implementations
+        if has_trivial_copyinit or has_trivial_moveinit:
+            should_suggest = True
+
+        # Struct without traits is fine if no compelling reason to add them
+        return (True, should_suggest)
 
     fn check_documentation_patterns(
         self, file_content: String, file_path: String
@@ -1442,21 +1453,32 @@ struct MojoSyntaxChecker(Copyable, Movable):
                     )
                     violations.append(violation)
 
-                # Check struct traits with improved logic
-                if not self.check_struct_traits(String(line)):
+                # Check struct traits with conservative logic
+                struct_body = self._extract_struct_body(lines, i)
+                trait_result = self.check_struct_traits(
+                    String(line), struct_body
+                )
+                _ = trait_result[
+                    0
+                ]  # has_appropriate_traits - not used in current logic
+                should_suggest_traits = trait_result[1]
+
+                # Only create observation if there's a compelling reason to suggest traits
+                if should_suggest_traits:
                     violation = SyntaxViolation(
                         file_path,
                         line_num,
-                        "struct_traits",
+                        "struct_traits_enhancement",
                         (
-                            "Struct likely needs (Copyable, Movable) traits for"
-                            " copying and collections"
+                            "Struct has trivial lifecycle methods that could be"
+                            " replaced with traits"
                         ),
                         (
-                            "Add (Copyable, Movable) traits - required for"
-                            " copying, function returns, and collection storage"
+                            "Consider replacing explicit"
+                            " __copyinit__/__moveinit__ methods with (Copyable,"
+                            " Movable) traits for cleaner code"
                         ),
-                        "suggestion",
+                        "observation",
                     )
                     violations.append(violation)
 
