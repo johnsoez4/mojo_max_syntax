@@ -28,8 +28,11 @@ project_root/
 ├── tests/                 # All test files
 │   ├── src -> ../src      # Symbolic link for imports
 │   ├── unit/              # Unit tests
+│   │   └── src -> ../../src  # Symbolic link for imports
 │   ├── integration/       # Integration tests
+│   │   └── src -> ../../src  # Symbolic link for imports
 │   └── performance/       # Performance tests
+│       └── src -> ../../src  # Symbolic link for imports
 ├── README.md              # Project overview and documentation
 └── mojo_max_syntax/       # Mojo syntax standards and automation
     ├── README.md          # This file - syntax tooling overview and usage
