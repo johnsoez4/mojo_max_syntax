@@ -398,6 +398,37 @@ struct MojoSyntaxChecker(Copyable, Movable):
                     violations.append(violation)
                     break  # Only report once per file
 
+        # Third pass: Check for deprecated platform detection imports
+        for i in range(len(lines)):
+            line = lines[i].strip()
+            line_num = i + 1
+
+            # Check for deprecated platform detection functions in sys imports
+            if line.startswith("from sys import") and (
+                "os_is_linux" in line
+                or "os_is_macos" in line
+                or "os_is_windows" in line
+                or "is_apple_m1" in line
+                or "is_apple_m2" in line
+                or "is_apple_m3" in line
+                or "is_apple_silicon" in line
+                or "CompilationTarget" in line
+                or "_current_arch" in line
+            ):
+                violation = SyntaxViolation(
+                    file_path,
+                    line_num,
+                    "deprecated_platform_imports",
+                    "Platform detection functions moved from sys to sys.info",
+                    (
+                        "Import CompilationTarget from sys.info and use its"
+                        " methods: CompilationTarget.is_linux(),"
+                        " CompilationTarget.is_apple_m1(), etc."
+                    ),
+                    "error",
+                )
+                violations.append(violation)
+
         return violations
 
     fn check_struct_patterns(
@@ -2509,7 +2540,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
                         ".mojo"
                     ) or file_path_str.endswith(".🔥"):
                         mojo_files.append(file_path_str)
-        except:
+        except Exception:
             # Skip directories that can't be accessed (permissions, etc.)
             pass
 
@@ -2724,7 +2755,7 @@ fn main() raises:
             if i + 1 < len(args):
                 try:
                     checker.backup_retention_days = atol(String(args[i + 1]))
-                except:
+                except Exception:
                     print(
                         "Warning: Invalid retention days value, using"
                         " default (7)"

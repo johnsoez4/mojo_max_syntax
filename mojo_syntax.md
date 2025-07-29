@@ -4259,6 +4259,26 @@ This section contains key insights and guidelines derived from development exper
 - For Mojo main() functions in modules: include main() functions in benchmark/test/demo scripts for standalone execution - compiler warnings about main() in packages are acceptable design patterns.
 - For Mojo design patterns: prefer Copyable/Movable traits over explicit __copyinit__/__moveinit__ methods when default behavior is sufficient. However, when refactoring existing code, only add these traits if: (a) replacing existing trivial __copyinit__/__moveinit__ implementations, (b) required by compiler to satisfy new dependencies from other code changes, or (c) the struct is being used in collections and currently fails compilation.
 
+### **Platform Detection Import Changes**
+- **BREAKING CHANGE**: Platform detection functions were moved from Mojo's `sys` module to `sys.info` as methods on the `CompilationTarget` struct.
+- **Solution**: Import `CompilationTarget` from `sys.info` and use its methods for platform detection.
+- **Hardware detection functions** (`has_nvidia_gpu_accelerator`, `num_physical_cores`, etc.) remain available in `sys`.
+- **Correct import pattern**:
+  ```mojo
+  # Hardware detection (still in sys)
+  from sys import has_nvidia_gpu_accelerator, num_physical_cores
+
+  # Platform detection (now in sys.info)
+  from sys.info import CompilationTarget
+
+  # Usage examples:
+  if CompilationTarget.is_linux():
+      print("Running on Linux")
+  if CompilationTarget.is_apple_m1():
+      print("Running on Apple M1")
+  var arch = String(CompilationTarget._arch())
+  ```
+
 ### **Mojo Codebase Cleanup**
 - For Mojo codebase cleanup: KEEP core production files in src/, essential utilities, tests in tests/ directories, working demos and benchmarks; DELETE duplicate implementations, experimental files, temporary development files like test_*_simple.mojo if better versions exist, outdated approaches, and broken/non-functional files.
 
