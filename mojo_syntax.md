@@ -194,6 +194,217 @@ elapsed_ms = Float64(elapsed_ns) / 1_000_000.0
 
 ---
 
+## 🖥️ Subprocess Execution & Shell Commands
+
+### ✅ **Subprocess Module Availability**
+
+Mojo provides subprocess functionality through the `subprocess` module, enabling execution of shell commands and external processes.
+
+**Module Location**: `/home/johnsoe1/dev/modular/mojo/stdlib/stdlib/subprocess/subprocess.mojo`
+
+### ✅ **Basic Subprocess Patterns**
+
+```mojo
+# Import subprocess functionality
+from subprocess import run
+
+# Execute simple command and get output
+fn get_version_info() -> String:
+    """Get version information using subprocess."""
+    try:
+        # Execute command and capture output
+        var output = run("mojo -v")
+        return String(output.strip())
+    except e:
+        return "Command execution failed"
+
+# Execute command with error handling
+fn execute_shell_command(command: String) -> String:
+    """Execute shell command with proper error handling."""
+    try:
+        var result = run(command)
+
+        # Process and return the output
+        if result:
+            return String(result.strip())
+        else:
+            return "No output from command"
+
+    except e:
+        return "Subprocess error: command failed"
+```
+
+### ✅ **Version Detection Patterns**
+
+```mojo
+# Detect Mojo version using subprocess
+@staticmethod
+fn _detect_mojo_version() -> String:
+    """Detect actual Mojo version using mojo -v command via subprocess."""
+    try:
+        from subprocess import run
+
+        # Execute mojo -v command to get actual version
+        var output = run("mojo -v")
+
+        # Parse output: "Mojo 25.6.0.dev2025073007 (1df3bfc1)"
+        if "Mojo " in output:
+            var parts = output.split("Mojo ")
+            if len(parts) > 1:
+                var version_part = String(parts[1].strip())
+                return version_part
+
+        return String(output.strip())
+
+    except e:
+        return "Version detection failed (subprocess error)"
+
+# Detect MAX Engine version using subprocess
+@staticmethod
+fn _detect_max_engine_version() -> String:
+    """Detect actual MAX Engine version using pixi list max command via subprocess."""
+    try:
+        from subprocess import run
+
+        # Execute pixi list max command
+        var output = run("pixi list max")
+
+        # Parse output to extract version from table format:
+        # max       25.6.0.dev2025073007  release  30 MiB    conda  ...
+        var lines = output.split("\n")
+        for i in range(len(lines)):
+            var line = lines[i].strip()
+            if line.startswith("max ") and not line.startswith("max-"):
+                var parts = line.split()
+                if len(parts) >= 2:
+                    return String(parts[1].strip())
+
+        return "MAX Engine version not found in pixi output"
+
+    except e:
+        return "Version detection failed (subprocess error)"
+```
+
+### ✅ **Common Shell Commands**
+
+```mojo
+# System information commands
+fn get_system_info() -> String:
+    """Get system information using common shell commands."""
+    try:
+        from subprocess import run
+
+        # Get OS information
+        var os_info = run("uname -a")
+
+        # Get CPU information (Linux)
+        var cpu_info = run("lscpu | grep 'Model name'")
+
+        # Get memory information (Linux)
+        var mem_info = run("free -h | grep Mem")
+
+        return "OS: " + String(os_info.strip()) + "\nCPU: " + String(cpu_info.strip())
+
+    except e:
+        return "System info detection failed"
+
+# Package management commands
+fn check_package_version(package_name: String) -> String:
+    """Check package version using pixi list."""
+    try:
+        from subprocess import run
+
+        var command = "pixi list " + package_name
+        var output = run(command)
+
+        # Parse package list output
+        var lines = output.split("\n")
+        for i in range(len(lines)):
+            var line = lines[i].strip()
+            if line.startswith(package_name + " "):
+                var parts = line.split()
+                if len(parts) >= 2:
+                    return String(parts[1].strip())
+
+        return "Package not found"
+
+    except e:
+        return "Package check failed"
+```
+
+### 📋 **Subprocess Best Practices**
+
+1. **Always use try-catch** for subprocess operations to handle execution failures
+2. **Import subprocess locally** within functions to avoid global dependencies
+3. **Process output strings** using `String()` conversion and `.strip()` for clean results
+4. **Parse structured output** (like tables) by splitting on newlines and whitespace
+5. **Provide meaningful fallbacks** when subprocess execution fails
+6. **Use specific commands** rather than complex shell pipelines for reliability
+7. **Handle empty output** cases gracefully
+8. **Strip whitespace** from command output to avoid formatting issues
+
+### ⚠️ **Subprocess Limitations & Considerations**
+
+```mojo
+# Current limitations and workarounds
+fn subprocess_considerations():
+    """Important considerations for subprocess usage."""
+
+    # 1. Error handling is essential
+    try:
+        var output = run("command_that_might_fail")
+        # Always handle potential failures
+    except e:
+        # Provide meaningful fallback behavior
+        print("Command failed, using fallback")
+
+    # 2. Output parsing requires string manipulation
+    var raw_output = run("complex_command")
+    var lines = raw_output.split("\n")
+    # Process each line as needed
+
+    # 3. Platform-specific commands need conditional logic
+    from sys.info import CompilationTarget
+
+    if CompilationTarget.is_linux():
+        var result = run("lscpu")  # Linux-specific
+    elif CompilationTarget.is_macos():
+        var result = run("sysctl -n machdep.cpu.brand_string")  # macOS-specific
+```
+
+### 🔍 **Example Usage Patterns**
+
+```mojo
+# Real-world example: System detection
+fn detect_system_capabilities() -> String:
+    """Detect system capabilities using subprocess commands."""
+    try:
+        from subprocess import run
+
+        # Get Mojo version
+        var mojo_version = run("mojo -v")
+
+        # Get MAX Engine version
+        var max_version = run("pixi list max")
+
+        # Get GPU information (NVIDIA)
+        var gpu_info = run("nvidia-smi --query-gpu=name --format=csv,noheader")
+
+        # Combine information
+        var report = "Mojo: " + String(mojo_version.strip()) + "\n"
+        report += "MAX Engine: " + String(max_version.split("\n")[1].split()[1]) + "\n"
+        report += "GPU: " + String(gpu_info.strip())
+
+        return report
+
+    except e:
+        return "System detection failed"
+```
+
+**Related Files**: `src/benchmarks/report_generator.mojo` (version detection functions)
+
+---
+
 ## 🔧 Function Definitions & Signatures
 
 ### ✅ **Standard Function Patterns**
