@@ -44,6 +44,9 @@ from time import perf_counter_ns as now
 from sys.arg import argv
 from pathlib import Path
 
+# Type alias for string slice collections
+alias Lines[origin: Origin[False]] = List[StringSlice[origin]]
+
 
 struct SyntaxViolation(Copyable, Movable):
     """Represents a syntax violation found in a Mojo file."""
@@ -188,7 +191,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
         self.keep_backups = False  # Don't keep backups by default
         self.backup_retention_days = 7  # Keep backups for 7 days
 
-    fn _is_inside_docstring(self, lines: List[String], line_index: Int) -> Bool:
+    fn _is_inside_docstring[
+        origin: Origin[False]
+    ](self, lines: Lines[origin], line_index: Int) -> Bool:
         """
         Check if the given line index is inside a docstring.
 
@@ -216,9 +221,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
         # If odd number of triple quotes, we're inside a docstring
         return (triple_quote_count % 2) == 1
 
-    fn _is_inside_variable_string(
-        self, lines: List[String], line_index: Int
-    ) -> Bool:
+    fn _is_inside_variable_string[
+        origin: Origin[False]
+    ](self, lines: Lines[origin], line_index: Int) -> Bool:
         """
         Check if the given line index is inside a variable-assigned string literal.
 
@@ -257,9 +262,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
         return False
 
-    fn _should_skip_line_for_violations(
-        self, lines: List[String], line_index: Int
-    ) -> Bool:
+    fn _should_skip_line_for_violations[
+        origin: Origin[False]
+    ](self, lines: Lines[origin], line_index: Int) -> Bool:
         """
         Determine if a line should be skipped for violation detection.
 
@@ -500,9 +505,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
         return violations
 
-    fn _check_struct_initialization_order(
-        self, lines: List[String], file_path: String
-    ) -> List[SyntaxViolation]:
+    fn _check_struct_initialization_order[
+        origin: Origin[False]
+    ](self, lines: Lines[origin], file_path: String) -> List[SyntaxViolation]:
         """Check for struct initialization order violations."""
         violations = List[SyntaxViolation]()
 
@@ -593,8 +598,13 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
         return violations
 
-    fn _analyze_struct_traits(
-        self, lines: List[String], struct_line_idx: Int, file_path: String
+    fn _analyze_struct_traits[
+        origin: Origin[False]
+    ](
+        self,
+        lines: Lines[origin],
+        struct_line_idx: Int,
+        file_path: String,
     ) -> List[SyntaxViolation]:
         """Analyze struct for trait requirements based on lifecycle methods."""
         violations = List[SyntaxViolation]()
@@ -731,9 +741,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
         return StructInfo(name, has_copyable, has_movable)
 
-    fn _extract_struct_body(
-        self, lines: List[String], struct_start: Int
-    ) -> List[String]:
+    fn _extract_struct_body[
+        origin: Origin[False]
+    ](self, lines: Lines[origin], struct_start: Int) -> List[String]:
         """Extract the body of a struct definition."""
         body = List[String]()
         var i = struct_start + 1
@@ -757,7 +767,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 if current_indent > 0:
                     indent_level = current_indent
                     found_body = True
-                    body.append(line)
+                    body.append(String(line))
                 i += 1
                 continue
 
@@ -770,7 +780,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 # We've reached the end of the struct
                 break
 
-            body.append(line)
+            body.append(String(line))
             i += 1
 
         return body
@@ -890,9 +900,11 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
         return non_trivial_lines == 0
 
-    fn _check_unsafe_pointer_ownership(
+    fn _check_unsafe_pointer_ownership[
+        origin: Origin[False]
+    ](
         self,
-        lines: List[String],
+        lines: Lines[origin],
         line_index: Int,
         file_content: String,
         file_path: String,
@@ -944,9 +956,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
             "warning",
         )
 
-    fn _is_gpu_kernel_function(
-        self, lines: List[String], line_index: Int
-    ) -> Bool:
+    fn _is_gpu_kernel_function[
+        origin: Origin[False]
+    ](self, lines: Lines[origin], line_index: Int) -> Bool:
         """Check if the current line is part of a GPU kernel function definition.
         """
         # Look backwards for function definition
@@ -977,8 +989,13 @@ struct MojoSyntaxChecker(Copyable, Movable):
             and ":" in line  # Parameter declaration
         )
 
-    fn _has_proper_memory_management(
-        self, lines: List[String], line_index: Int, file_content: String
+    fn _has_proper_memory_management[
+        origin: Origin[False]
+    ](
+        self,
+        lines: Lines[origin],
+        line_index: Int,
+        file_content: String,
     ) -> Bool:
         """Check if function has proper memory management for owned UnsafePointer.
         """
@@ -992,9 +1009,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
         return False
 
-    fn _extract_function_body(
-        self, lines: List[String], param_line_index: Int
-    ) -> List[String]:
+    fn _extract_function_body[
+        origin: Origin[False]
+    ](self, lines: Lines[origin], param_line_index: Int) -> List[String]:
         """Extract the body of the function containing the given parameter line.
         """
         body = List[String]()
@@ -1050,7 +1067,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 if indent_level == 0:
                     indent_level = current_indent
 
-                body.append(line)
+                body.append(String(line))
 
             i += 1
 
@@ -1225,9 +1242,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
         return violations
 
-    fn assess_docstring_quality(
-        self, lines: List[String], start_line: Int
-    ) -> (Bool, String, String):
+    fn assess_docstring_quality[
+        origin: Origin[False]
+    ](self, lines: Lines[origin], start_line: Int) -> (Bool, String, String):
         """
         Assess the quality of a docstring starting at the given line.
 
@@ -2080,7 +2097,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 fixed_line = line.replace("from ..", "from src.")
                 fixed_lines.append(fixed_line)
             else:
-                fixed_lines.append(line)
+                fixed_lines.append(String(line))
 
         return "\n".join(fixed_lines)
 
@@ -2098,7 +2115,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
                     "# TODO: Review variable declaration - " + fixed_line
                 )
             else:
-                fixed_lines.append(line)
+                fixed_lines.append(String(line))
 
         return "\n".join(fixed_lines)
 
@@ -2167,7 +2184,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 for sig_line_idx in range(
                     signature_start, signature_end_index + 1
                 ):
-                    fixed_lines.append(lines[sig_line_idx])
+                    fixed_lines.append(String(lines[sig_line_idx]))
 
                 # Add docstring if missing (after the complete signature)
                 if not has_docstring:
@@ -2185,7 +2202,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 i = signature_end_index + 1
                 continue
             else:
-                fixed_lines.append(line)
+                fixed_lines.append(String(line))
                 i += 1
 
         return "\n".join(fixed_lines)
@@ -2219,19 +2236,23 @@ struct MojoSyntaxChecker(Copyable, Movable):
                         lines, i, struct_violations
                     )
                 else:
-                    fixed_lines.append(line)
+                    fixed_lines.append(String(line))
             else:
-                fixed_lines.append(line)
+                fixed_lines.append(String(line))
 
             i += 1
 
         return "\n".join(fixed_lines)
 
-    fn _apply_struct_trait_fixes(
-        self, struct_line: String, violations: List[SyntaxViolation]
+    fn _apply_struct_trait_fixes[
+        origin: Origin[False]
+    ](
+        self,
+        struct_line: StringSlice[origin],
+        violations: List[SyntaxViolation],
     ) -> String:
         """Apply trait fixes to a struct definition line."""
-        fixed_line = struct_line
+        fixed_line = String(struct_line)
 
         for i in range(len(violations)):
             violation = violations[i]
@@ -2263,9 +2284,11 @@ struct MojoSyntaxChecker(Copyable, Movable):
             return line.replace(trait_name, "")
         return line
 
-    fn _skip_redundant_methods(
+    fn _skip_redundant_methods[
+        origin: Origin[False]
+    ](
         self,
-        lines: List[String],
+        lines: Lines[origin],
         struct_start: Int,
         violations: List[SyntaxViolation],
     ) -> Int:
