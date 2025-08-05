@@ -79,8 +79,8 @@ mojo --version
 max --version
 
 # Example output:
-# mojo 24.4.0 (2024-06-07)
-# MAX Engine 24.4.0
+# mojo 25.6.0.dev2025080505 (90bc2e90)
+# MAX Engine 25.6.0
 ```
 
 ### 📋 **Environment Information**
@@ -927,12 +927,19 @@ fn main() raises:
     run_benchmark_suite()
 ```
 
+**🚨 CRITICAL PRESERVATION RULE:**
+- **NEVER REMOVE main() FUNCTIONS** unless explicitly requested by the user
+- **Always preserve existing main() functions** during syntax refactoring and compliance fixes
+- **main() functions are intentional design choices** by developers for standalone execution
+- **Compiler warnings about main() in packages are acceptable** and should be ignored
+
 **Important Notes:**
 - **Compiler Warning Expected**: `mojo: error: module does not contain a 'main' function` when building as library
 - **Ignore This Error**: This is an acceptable design pattern for executable scripts
 - **Use Cases**: Benchmark scripts, test files, demo applications, standalone utilities
 - **Benefits**: Allows modules to be both importable libraries AND executable scripts
 - **Pattern**: Include main() for standalone execution while keeping module functionality intact
+- **Preservation Priority**: main() functions have high preservation priority during refactoring
 
 ### ✅ **Exception Propagation Best Practices**
 
@@ -4467,7 +4474,7 @@ This section contains key insights and guidelines derived from development exper
 ### **Mojo Development Guidelines**
 - For Mojo command-line argument parsing, use 'from sys import argv' and 'args = argv()' to get command-line arguments as an iterable collection.
 - In Mojo, abs, max, and min functions are builtin and don't need to be imported from math module, and 'from time import now' is not required/available.
-- For Mojo main() functions in modules: include main() functions in benchmark/test/demo scripts for standalone execution - compiler warnings about main() in packages are acceptable design patterns.
+- For Mojo main() functions in modules: include main() functions in benchmark/test/demo scripts for standalone execution - compiler warnings about main() in packages are acceptable design patterns. NEVER REMOVE main() functions during refactoring unless explicitly requested by the user.
 - For Mojo design patterns: prefer Copyable/Movable traits over explicit __copyinit__/__moveinit__ methods when default behavior is sufficient. However, when refactoring existing code, only add these traits if: (a) replacing existing trivial __copyinit__/__moveinit__ implementations, (b) required by compiler to satisfy new dependencies from other code changes, or (c) the struct is being used in collections and currently fails compilation.
 
 ### **Platform Detection Import Changes**
@@ -4514,6 +4521,7 @@ This section contains key insights and guidelines derived from development exper
 - Trait additions should be driven by actual usage requirements (compilation failures, collection usage, API requirements) rather than theoretical completeness or pattern uniformity.
 - Prioritize code stability over pattern consistency in mature codebases - working code that follows older but valid patterns should remain unchanged unless modernization provides clear functional benefits.
 - When refactoring for syntax compliance, distinguish between "required fixes" (compilation errors, deprecated patterns) and "optional enhancements" (style preferences, theoretical improvements) - focus effort on required fixes first.
+- **NEVER REMOVE main() FUNCTIONS** during automated refactoring unless explicitly requested - main() functions are intentional design choices for standalone execution and must be preserved.
 
 ---
 
