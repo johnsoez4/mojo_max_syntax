@@ -912,7 +912,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
         """
         Check UnsafePointer parameters for ownership violations.
 
-        Only flags UnsafePointer parameters that are explicitly owned by the function
+        Only flags UnsafePointer parameters that are explicitly var by the function
         and require memory management. Borrowed parameters (default) are not flagged.
 
         Args:
@@ -922,7 +922,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
             file_path: Path to the file being checked.
 
         Returns:
-            Optional violation if owned UnsafePointer lacks proper memory management.
+            Optional violation if var UnsafePointer lacks proper memory management.
         """
         line = lines[line_index].strip()
         line_num = line_index + 1
@@ -935,22 +935,22 @@ struct MojoSyntaxChecker(Copyable, Movable):
         if self._is_gpu_kernel_function(lines, line_index):
             return None  # GPU kernels use borrowed pointers managed by DeviceContext
 
-        # Check if this is an explicitly owned parameter
-        if not self._is_owned_unsafe_pointer_parameter(String(line)):
-            return None  # Only flag owned parameters
+        # Check if this is an explicitly var parameter (replaces owned)
+        if not self._is_var_unsafe_pointer_parameter(String(line)):
+            return None  # Only flag var parameters
 
-        # Check if the function properly manages the owned memory
+        # Check if the function properly manages the var memory
         if self._has_proper_memory_management(lines, line_index, file_content):
             return None  # Proper management found
 
-        # Create violation for owned UnsafePointer without proper management
+        # Create violation for var UnsafePointer without proper management
         return SyntaxViolation(
             file_path,
             line_num,
             "performance_memory_leak",
-            "Owned UnsafePointer parameter without explicit memory management",
+            "var UnsafePointer parameter without explicit memory management",
             (
-                "Add .free() call for owned UnsafePointer parameters or use"
+                "Add .free() call for var UnsafePointer parameters or use"
                 " RAII patterns"
             ),
             "warning",
@@ -979,13 +979,12 @@ struct MojoSyntaxChecker(Copyable, Movable):
             i -= 1
         return False
 
-    fn _is_owned_unsafe_pointer_parameter(self, line: String) -> Bool:
-        """Check if line contains an explicitly owned UnsafePointer parameter.
-        """
-        # Look for explicit ownership annotations
+    fn _is_var_unsafe_pointer_parameter(self, line: String) -> Bool:
+        """Check if line contains an explicitly var UnsafePointer parameter."""
+        # Look for explicit var ownership annotations (replaces owned)
         return (
             "UnsafePointer" in line
-            and ("owned " in line or "var " in line)
+            and "var " in line
             and ":" in line  # Parameter declaration
         )
 
@@ -997,7 +996,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
         line_index: Int,
         file_content: String,
     ) -> Bool:
-        """Check if function has proper memory management for owned UnsafePointer.
+        """Check if function has proper memory management for var UnsafePointer.
         """
         # Find the function that contains this parameter
         function_body = self._extract_function_body(lines, line_index)
@@ -1113,6 +1112,18 @@ struct MojoSyntaxChecker(Copyable, Movable):
                     "variable_declaration",
                     "Old 'let' keyword usage detected",
                     "Use direct assignment or 'var' for mutable variables",
+                    "error",
+                )
+                violations.append(violation)
+
+            # Check for deprecated 'owned' parameter syntax
+            if "owned " in line and ("fn " in line or ":" in line):
+                violation = SyntaxViolation(
+                    file_path,
+                    line_num,
+                    "parameter_declaration",
+                    "Deprecated 'owned' parameter syntax detected",
+                    "Replace 'owned' with 'var' for parameter ownership",
                     "error",
                 )
                 violations.append(violation)
@@ -2114,6 +2125,11 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 fixed_lines.append(
                     "# TODO: Review variable declaration - " + fixed_line
                 )
+            # Fix deprecated 'owned' parameter syntax
+            elif "owned " in line and ("fn " in line or ":" in line):
+                # Convert owned to var (parameter ownership)
+                fixed_line = line.replace("owned ", "var ")
+                fixed_lines.append(fixed_line)
             else:
                 fixed_lines.append(String(line))
 
@@ -2697,6 +2713,9 @@ struct TestStruct:
 fn test_function():
     print("Missing docstring")
     raise Error("Test error")
+
+fn append(mut self, owned page: AsDLPage):
+    print("Deprecated owned syntax")
 """
 
     print("Testing pattern detection on sample code...")

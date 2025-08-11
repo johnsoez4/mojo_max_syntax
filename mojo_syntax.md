@@ -226,9 +226,10 @@ mojo run src/file.mojo
 ### 📋 **Version Compatibility Notes**
 
 1. **Mojo 24.4+**: `let` keyword removed, use direct assignment or `var`
-2. **MAX Engine**: GPU operations require compatible MAX Engine version
-3. **GPU Support**: Real GPU hardware available for acceleration
-4. **Import Syntax**: MAX Engine imports follow standard Mojo import patterns
+2. **Mojo 25.6+**: `owned` parameter convention renamed to `var`
+3. **MAX Engine**: GPU operations require compatible MAX Engine version
+4. **GPU Support**: Real GPU hardware available for acceleration
+5. **Import Syntax**: MAX Engine imports follow standard Mojo import patterns
 
 ---
 
@@ -537,7 +538,7 @@ fn init_system() raises -> None:
         msg = get_error_message(result)
         raise Error("Failed to initialize system: " + msg)
 
-# Function with complex parameters
+# Function with complex parameters (using var for owned parameters)
 fn create_resource(resource_id: ResourceId, context: UnsafePointer[NoneType], flags: Int32) raises -> ResourceHandle:
     """Create a new resource with specified parameters."""
     handle = external_call["resource_create", Int32](
@@ -547,6 +548,11 @@ fn create_resource(resource_id: ResourceId, context: UnsafePointer[NoneType], fl
         msg = get_error_message(handle)
         raise Error("Failed to create resource: " + msg)
     return handle
+
+# Function with var parameter (replaces owned)
+fn append(mut self, var page: AsDLPage):
+    """Append a page to the collection (var replaces owned)."""
+    self.pages.append(page^)  # Transfer ownership
 ```
 
 ### 📋 **Function Definition Rules**
@@ -1669,6 +1675,34 @@ var resource_id = 12345  # Should be: resource_id = 12345
 var episode_result = self._run_single_episode(episode)  # Should be: episode_result = ...
 ```
 
+#### **🔄 CRITICAL: `var` Parameter Convention (Replaces `owned`)**
+
+**BREAKING CHANGE**: The `owned` argument convention has been renamed to `var` in recent Mojo versions.
+
+```mojo
+# ✅ CORRECT: Use var for owned parameters (NEW SYNTAX)
+fn append(mut self, var page: AsDLPage):
+    """Append a page to the collection (var replaces owned)."""
+    self.pages.append(page^)  # Transfer ownership
+
+fn process_data(var buffer: UnsafePointer[UInt8], size: Int):
+    """Process data with owned buffer (var replaces owned)."""
+    # Function takes ownership of buffer
+    defer buffer.free()  # Clean up owned resource
+    # ... process data ...
+
+# ❌ INCORRECT: Old owned syntax (DEPRECATED)
+fn append(mut self, owned page: AsDLPage):  # ← OLD SYNTAX
+    """This syntax is no longer supported."""
+    self.pages.append(page^)
+```
+
+**Migration Pattern:**
+- Replace `owned parameter_name:` with `var parameter_name:`
+- Functionality remains identical - only the keyword changes
+- Ownership transfer semantics are preserved
+- Memory management patterns stay the same
+
 #### **📋 MANDATORY CHECKLIST FOR EVERY FILE:**
 - [ ] **Scan all variable declarations** for unnecessary `var` usage
 - [ ] **Convert single-assignment variables** to direct assignment
@@ -1676,6 +1710,8 @@ var episode_result = self._run_single_episode(episode)  # Should be: episode_res
 - [ ] **Remove unused variable declarations** entirely (don't assign to `_`)
 - [ ] **Use `_` only for loop indices** where the index isn't needed
 - [ ] **Use `alias`** for compile-time constants and type aliases
+- [ ] **Replace `owned` parameters** with `var` parameters
+- [ ] **Verify ownership transfer** semantics are preserved after migration
 
 **Note**: The `let` keyword was completely removed from Mojo in version 24.4 (June 2024).
 
