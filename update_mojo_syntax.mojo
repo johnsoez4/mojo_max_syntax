@@ -293,9 +293,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
         lines = file_content.split("\n")
 
         # Track import sections for proper organization checking
-        var stdlib_imports = List[Int]()  # Line numbers of stdlib imports
-        var project_imports = List[Int]()  # Line numbers of project imports
-        var gpu_imports = List[Int]()  # Line numbers of GPU imports
+        stdlib_imports = List[Int]()  # Line numbers of stdlib imports
+        project_imports = List[Int]()  # Line numbers of project imports
+        gpu_imports = List[Int]()  # Line numbers of GPU imports
         var first_non_comment_line = -1
 
         # First pass: categorize imports and find first non-comment line
@@ -497,7 +497,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
                     violations.append(violation)
 
         # Check for struct initialization order violations
-        var init_violations = self._check_struct_initialization_order(
+        init_violations = self._check_struct_initialization_order(
             lines, file_path
         )
         for violation in init_violations:
@@ -516,13 +516,13 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
             # Look for __init__ method definitions
             if line.startswith("fn __init__("):
-                var indent_level = len(lines[i]) - len(lines[i].lstrip())
+                indent_level = len(lines[i]) - len(lines[i].lstrip())
                 var found_field_assignment = False
 
                 # Scan through the __init__ method until we find a line with same or less indentation
                 for j in range(i + 1, len(lines)):
-                    var current_line = lines[j].strip()
-                    var current_indent = len(lines[j]) - len(lines[j].lstrip())
+                    current_line = lines[j].strip()
+                    current_indent = len(lines[j]) - len(lines[j].lstrip())
 
                     # If we hit a line with same or less indentation (and it's not empty), we've exited the method
                     if len(current_line) > 0 and current_indent <= indent_level:
@@ -716,13 +716,13 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
         # Find struct name
         if "struct " in struct_line:
-            var start_idx = struct_line.find("struct ") + 7
-            var end_idx = len(struct_line)
+            start_idx = struct_line.find("struct ") + 7
+            end_idx = len(struct_line)
 
             if "(" in struct_line:
                 end_idx = struct_line.find("(")
                 # Check for traits in parentheses
-                var traits_section = struct_line[
+                traits_section = struct_line[
                     struct_line.find("(") : struct_line.find(")") + 1
                 ]
                 has_copyable = "Copyable" in traits_section
@@ -760,7 +760,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 continue
 
             # Calculate indentation
-            var current_indent = len(line) - len(line.lstrip())
+            current_indent = len(line) - len(line.lstrip())
 
             # If we haven't found the body yet, look for first indented content
             if not found_body:
@@ -843,7 +843,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 continue
 
             # Calculate current indentation
-            var current_indent = len(line) - len(line.lstrip())
+            current_indent = len(line) - len(line.lstrip())
 
             # If we're back to method level or less, we've reached the end
             if current_indent <= method_indent and String(stripped) != "":
@@ -2047,7 +2047,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
             remove(backup_path)
             print("✅ Cleaned up backup:", backup_path)
             return True
-        except:
+        except e:
             # Backup file doesn't exist or couldn't be deleted
             return False
 
@@ -2070,10 +2070,10 @@ struct MojoSyntaxChecker(Copyable, Movable):
                         remove(file_path)
                         print("🗑️  Removed backup:", file_path)
                         cleaned_count += 1
-                    except:
+                    except e:
                         continue  # Skip files we can't process
 
-        except:
+        except e:
             print("Warning: Could not perform automatic backup cleanup")
 
         return cleaned_count
