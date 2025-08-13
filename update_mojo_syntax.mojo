@@ -1130,11 +1130,48 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 )
                 violations.append(violation)
 
+            # Check for unnecessary var usage (single assignments)
+            if (
+                line.startswith("var ")
+                and "=" in line
+                and not line.startswith("var _")
+            ):
+                # Extract variable name and check if it's a single assignment
+                var_part = String(line.split("var ")[1].split("=")[0].strip())
+
+                # Skip if it's a type declaration without assignment (var name: Type)
+                if ":" in var_part and "=" not in String(line.split(":")[0]):
+                    continue
+
+                # Skip if it's a struct field declaration
+                if self._is_inside_struct_definition(lines, i):
+                    continue
+
+                # Skip if it's a function parameter
+                if self._is_function_parameter_line(lines, i):
+                    continue
+
+                # Check if this variable is reassigned later in the same scope
+                if not self._is_variable_reassigned(lines, i, var_part):
+                    violation = SyntaxViolation(
+                        file_path,
+                        line_num,
+                        "variable_declaration_unnecessary_var",
+                        "Unnecessary 'var' for single-assignment variable '"
+                        + var_part
+                        + "'",
+                        "Use direct assignment: " + var_part + " = ...",
+                        "warning",
+                    )
+                    violations.append(violation)
+
             # Check for DeviceContext variable naming convention
             if "= DeviceContext()" in line:
                 # Extract variable name
                 if "var " in line:
-                    var_part = line.split("var ")[1].split("=")[0].strip()
+                    var_part = String(
+                        line.split("var ")[1].split("=")[0].strip()
+                    )
                     # Check if variable name follows convention
                     is_valid_name = (
                         var_part == "ctx"
@@ -1162,6 +1199,54 @@ struct MojoSyntaxChecker(Copyable, Movable):
                         violations.append(violation)
 
         return violations
+
+    fn _is_inside_struct_definition(
+        self, lines: Lines[_], line_index: Int
+    ) -> Bool:
+        """Check if the line is inside a struct definition (field declaration).
+        """
+        # Look backwards for struct definition
+        for i in range(line_index - 1, -1, -1):
+            line = lines[i].strip()
+            if line.startswith("struct ") and ":" in line:
+                return True
+            elif (
+                line.startswith("fn ")
+                or line.startswith("alias ")
+                or line.startswith("from ")
+            ):
+                return False
+        return False
+
+    fn _is_function_parameter_line(
+        self, lines: Lines[_], line_index: Int
+    ) -> Bool:
+        """Check if the line is a function parameter declaration."""
+        line = lines[line_index].strip()
+        # Look for function parameter patterns
+        return "fn " in line and "(" in line and ")" in line
+
+    fn _is_variable_reassigned(
+        self, lines: Lines[_], start_index: Int, var_name: String
+    ) -> Bool:
+        """Check if a variable is reassigned after its initial declaration."""
+        # Look forward from the declaration to find reassignments
+        for i in range(start_index + 1, len(lines)):
+            line = lines[i].strip()
+
+            # Stop at function/struct boundaries
+            if line.startswith("fn ") or line.startswith("struct "):
+                break
+
+            # Check for reassignment (not declaration)
+            if (
+                line.startswith(var_name + " =")
+                or line.startswith(var_name + "+=")
+                or line.startswith(var_name + "-=")
+            ):
+                return True
+
+        return False
 
     fn check_gpu_patterns(
         self, file_content: String, file_path: String
@@ -2169,6 +2254,29 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 # Convert owned to var (parameter ownership)
                 fixed_line = line.replace("owned ", "var ")
                 fixed_lines.append(fixed_line)
+            # Fix unnecessary var usage for single assignments
+            elif (
+                line.strip().startswith("var ")
+                and "=" in line
+                and not line.strip().startswith("var _")
+            ):
+                stripped_line = line.strip()
+                var_part = String(
+                    stripped_line.split("var ")[1].split("=")[0].strip()
+                )
+
+                # Skip struct field declarations and function parameters
+                if not (
+                    ":" in var_part
+                    and "=" not in String(stripped_line.split(":")[0])
+                ):
+                    # Convert var assignment to direct assignment
+                    fixed_line = line.replace(
+                        "var " + var_part + " =", var_part + " ="
+                    )
+                    fixed_lines.append(String(fixed_line))
+                else:
+                    fixed_lines.append(String(line))
             else:
                 fixed_lines.append(String(line))
 

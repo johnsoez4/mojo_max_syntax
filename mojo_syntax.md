@@ -1644,6 +1644,12 @@ msg = SystemManager._get_error_message(result)
 optimization_result = self.parameter_optimizer.optimize_parameters()
 episode_results = self._run_training_episodes()
 final_results = TrainingResults(...)
+
+# ✅ CORRECT: Direct assignment for unit conversions and calculations
+cart_pos = la_pos_inches * INCHES_TO_METERS
+pend_angle = pend_pos_deg * DEGREES_TO_RADIANS
+pend_vel = pend_vel_deg_s * DEGREES_TO_RADIANS
+force = cmd_volts * ACTUATOR_GAIN
 ```
 
 #### **✅ REQUIRED: Use `var` Only When Necessary**
@@ -1673,7 +1679,21 @@ for episode in episodes:
 var result = external_call["system_init", Int32]()  # Should be: result = ...
 var resource_id = 12345  # Should be: resource_id = 12345
 var episode_result = self._run_single_episode(episode)  # Should be: episode_result = ...
+
+# ❌ INCORRECT: Unnecessary var for unit conversions (COMMON VIOLATION)
+var cart_pos = la_pos_inches * INCHES_TO_METERS  # Should be: cart_pos = ...
+var pend_angle = pend_pos_deg * DEGREES_TO_RADIANS  # Should be: pend_angle = ...
+var pend_vel = pend_vel_deg_s * DEGREES_TO_RADIANS  # Should be: pend_vel = ...
+var force = cmd_volts * ACTUATOR_GAIN  # Should be: force = ...
 ```
+
+#### **🎯 DETECTION RULE: Single Assignment Pattern**
+**A variable uses unnecessary `var` if:**
+1. **Declared and assigned on same line**: `var name = value`
+2. **Never reassigned**: Variable is only assigned once in its scope
+3. **Not conditional**: Assignment is not inside if/else or loop where declaration might be separate
+
+**AUTOMATION REQUIREMENT**: The automation script MUST detect and flag these patterns as violations.
 
 #### **🔄 CRITICAL: `var` Parameter Convention (Replaces `owned`)**
 
