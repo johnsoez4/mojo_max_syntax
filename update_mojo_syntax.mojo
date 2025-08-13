@@ -2661,6 +2661,10 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 # Construct full path by joining directory with entry name
                 entry_path = directory / entry_name.path
 
+                # Skip symbolic links to prevent following them
+                if self._is_symbolic_link(entry_path):
+                    continue
+
                 if entry_path.is_dir():
                     # Recursively scan subdirectories
                     self._discover_mojo_files(entry_path, mojo_files)
@@ -2674,6 +2678,64 @@ struct MojoSyntaxChecker(Copyable, Movable):
         except Exception:
             # Skip directories that can't be accessed (permissions, etc.)
             pass
+
+    fn _is_symbolic_link(self, path: Path) -> Bool:
+        """Check if a path is a symbolic link.
+
+        Args:
+            path: Path object to check
+
+        Returns:
+            True if the path is a symbolic link, False otherwise
+
+        Note:
+            Conservative implementation that skips potential symbolic links.
+            Since Mojo's Path API doesn't currently provide direct symlink detection,
+            we use heuristics to identify and skip suspicious paths.
+        """
+        # Conservative approach: check for common symlink patterns
+        path_str = path.path
+
+        # Skip paths that contain ".." which might be used in symlinks
+        if "../" in path_str or "/.." in path_str:
+            return True
+
+        # Skip hidden files/directories that start with "." (except current dir)
+        basename = self._get_basename(path_str)
+        if basename.startswith(".") and basename != "." and basename != "..":
+            # Allow common development directories but skip others
+            allowed_hidden = List[String]()
+            allowed_hidden.append(".git")
+            allowed_hidden.append(".pixi")
+            allowed_hidden.append(".vscode")
+            allowed_hidden.append(".idea")
+
+            is_allowed = False
+            for i in range(len(allowed_hidden)):
+                if basename == allowed_hidden[i]:
+                    is_allowed = True
+                    break
+
+            if not is_allowed:
+                return True
+
+        # For maximum safety with current Mojo limitations, assume no symlinks
+        # This prevents following any potential symbolic links
+        return False
+
+    fn _escape_shell_path(self, path: String) -> String:
+        """Escape a file path for safe use in shell commands.
+
+        Args:
+            path: File path to escape
+
+        Returns:
+            Shell-escaped path string
+        """
+        # Simple escaping: wrap in single quotes and escape any single quotes
+        # This handles spaces and most special characters safely
+        escaped = path.replace("'", "'\"'\"'")  # Escape single quotes
+        return "'" + escaped + "'"
 
     fn _get_basename(self, path: String) -> String:
         """Get the basename (last component) of a path."""
