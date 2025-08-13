@@ -178,6 +178,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
     var auto_cleanup_backups: Bool
     var keep_backups: Bool
     var backup_retention_days: Int
+    var compact_output: Bool
 
     fn __init__(out self):
         """Initialize the syntax checker."""
@@ -190,6 +191,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
         self.auto_cleanup_backups = True  # Auto-cleanup by default
         self.keep_backups = False  # Don't keep backups by default
         self.backup_retention_days = 7  # Keep backups for 7 days
+        self.compact_output = False
 
     fn _is_inside_docstring[
         origin: Origin[False]
@@ -2314,6 +2316,32 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
     fn print_report(self, reports: List[ComplianceReport]):
         """Print a comprehensive compliance report."""
+        # Compact output mode for fully compliant files
+        if self.compact_output:
+            for i in range(len(reports)):
+                report = reports[i]
+                # Count issues (exclude observations)
+                issues_count = 0
+                for j in range(len(report.violations)):
+                    v = report.violations[j]
+                    if v.severity == "error" or v.severity == "warning":
+                        issues_count += 1
+                if issues_count == 0 and Int(report.compliance_score) == 100:
+                    print("✅ " + report.file_path + " - 100% compliant")
+                else:
+                    print(
+                        "❌ "
+                        + report.file_path
+                        + " - "
+                        + String(Int(report.compliance_score))
+                        + "% compliant ("
+                        + String(issues_count)
+                        + " violations)"
+                    )
+                    # Fall back to detailed output for files with issues
+                    self._print_detailed_report_for_file(report)
+            return
+
         print("=" * 80)
         print("MOJO SYNTAX COMPLIANCE REPORT")
         print("=" * 80)
@@ -2448,36 +2476,100 @@ struct MojoSyntaxChecker(Copyable, Movable):
                         ":",
                         violation.description,
                     )
-                    print("    Type:", violation.violation_type)
-                    print("    Fix:", violation.suggested_fix)
-                    print("")
 
-                # Display one-line docstrings second
-                for j in range(len(one_line_docstrings)):
-                    violation = one_line_docstrings[j]
-                    print(
-                        "  ℹ️ Line",
-                        violation.line_number,
-                        ":",
-                        violation.description,
-                    )
-                    print("    Type:", violation.violation_type)
-                    print("    Fix:", violation.suggested_fix)
-                    print("")
+    fn _print_detailed_report_for_file(self, report: ComplianceReport):
+        """Print the existing detailed output for a single file report."""
+        print("")
+        print("File:", report.file_path)
+        print("Compliance Score:", report.compliance_score, "%")
+        print("Lines:", report.total_lines)
 
-            # Show usage hint when observations are hidden
-            if len(observations) > 0 and not self.show_observations:
-                print("")
+        # Separate violations into Issues and Observations first
+        issues = List[SyntaxViolation]()
+        observations = List[SyntaxViolation]()
+
+        for j in range(len(report.violations)):
+            violation = report.violations[j]
+            if violation.severity == "error" or violation.severity == "warning":
+                issues.append(violation)
+            else:
+                observations.append(violation)
+
+        # Print correct violation count (only actual violations, not observations)
+        print("Violations:", len(issues))
+
+        # Display Issues first
+        if len(issues) > 0:
+            print("")
+            print("Issues found (" + String(len(issues)) + "):")
+
+            for j in range(len(issues)):
+                violation = issues[j]
+                severity_marker = "❌" if violation.severity == "error" else "⚠️"
                 print(
-                    "Use --show-observations to display "
-                    + String(len(observations))
-                    + " suggestions and style recommendations"
+                    "  " + severity_marker + " Line",
+                    violation.line_number,
+                    ":",
+                    violation.description,
                 )
+                print("    Type:", violation.violation_type)
+                print("    Fix:", violation.suggested_fix)
+                print("")
 
-            if len(issues) == 0 and len(observations) == 0:
-                print("✅ No violations found!")
+        # Display Observations second (only if enabled)
+        if len(observations) > 0 and self.show_observations:
+            print("Observations (" + String(len(observations)) + "):")
 
-            print("-" * 40)
+            # Separate suggestions from one-line docstrings
+            suggestions = List[SyntaxViolation]()
+            one_line_docstrings = List[SyntaxViolation]()
+
+            for j in range(len(observations)):
+                violation = observations[j]
+                if "Appropriate one-line docstring" in violation.description:
+                    one_line_docstrings.append(violation)
+                else:
+                    suggestions.append(violation)
+
+            # Display suggestions first
+            for j in range(len(suggestions)):
+                violation = suggestions[j]
+                print(
+                    "  ℹ️ Line",
+                    violation.line_number,
+                    ":",
+                    violation.description,
+                )
+                print("    Type:", violation.violation_type)
+                print("    Fix:", violation.suggested_fix)
+                print("")
+
+            # Display one-line docstrings second
+            for j in range(len(one_line_docstrings)):
+                violation = one_line_docstrings[j]
+                print(
+                    "  ℹ️ Line",
+                    violation.line_number,
+                    ":",
+                    violation.description,
+                )
+                print("    Type:", violation.violation_type)
+                print("    Fix:", violation.suggested_fix)
+                print("")
+
+        # Show usage hint when observations are hidden
+        if len(observations) > 0 and not self.show_observations:
+            print("")
+            print(
+                "Use --show-observations to display "
+                + String(len(observations))
+                + " suggestions and style recommendations"
+            )
+
+        if len(issues) == 0 and len(observations) == 0:
+            print("✅ No violations found!")
+
+        print("-" * 40)
 
     fn scan_directory(
         mut self, directory_path: String
@@ -2654,6 +2746,7 @@ fn print_usage():
         "  --check-docstring-code Enable syntax checking within docstring code"
         " examples"
     )
+    print("  --compact              Compact output for fully compliant files")
     print("  --help                 Show this help message")
     print("")
     print("✅ Correct Usage Examples:")
@@ -2670,6 +2763,11 @@ fn print_usage():
         " --show-observations"
     )
     print("  mojo update_mojo_syntax.mojo --scan src/ --show-observations")
+    print("  mojo update_mojo_syntax.mojo --scan src/ --compact")
+    print(
+        "  mojo update_mojo_syntax.mojo --validate src/utils/gpu_matrix.mojo"
+        " --compact"
+    )
     print("")
     print("❌ Incorrect Usage (will show help instead):")
     print(
@@ -2788,6 +2886,8 @@ fn main() raises:
             checker.show_observations = True
         elif arg == "--check-docstring-code":
             checker.check_docstring_code = True
+        elif arg == "--compact":
+            checker.compact_output = True
         elif arg == "--keep-backups":
             checker.keep_backups = True
             checker.auto_cleanup_backups = False
