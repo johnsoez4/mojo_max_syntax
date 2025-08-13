@@ -1973,6 +1973,10 @@ struct MojoSyntaxChecker(Copyable, Movable):
             with open(file_path, "r") as f:
                 content = f.read()
 
+            # Store original content metrics for safety validation
+            original_line_count = len(content.split("\n"))
+            original_char_count = len(content)
+
             # Create backup if enabled
             if self.backup_enabled:
                 backup_path = file_path + ".backup"
@@ -1985,6 +1989,39 @@ struct MojoSyntaxChecker(Copyable, Movable):
             fixed_content = self.fix_variable_declarations(fixed_content)
             fixed_content = self.fix_documentation_issues(fixed_content)
             fixed_content = self.fix_trait_issues(fixed_content)
+
+            # Safety check: Validate content wasn't significantly reduced
+            fixed_line_count = len(fixed_content.split("\n"))
+            fixed_char_count = len(fixed_content)
+
+            # Allow for minor reductions due to whitespace cleanup, but flag major losses
+            line_reduction_ratio = Float64(
+                original_line_count - fixed_line_count
+            ) / Float64(original_line_count)
+            char_reduction_ratio = Float64(
+                original_char_count - fixed_char_count
+            ) / Float64(original_char_count)
+
+            if line_reduction_ratio > 0.1 or char_reduction_ratio > 0.1:
+                print("⚠️  WARNING: Significant content reduction detected!")
+                print(
+                    "  Original lines:",
+                    original_line_count,
+                    "-> Fixed lines:",
+                    fixed_line_count,
+                )
+                print(
+                    "  Original chars:",
+                    original_char_count,
+                    "-> Fixed chars:",
+                    fixed_char_count,
+                )
+                print(
+                    "  This may indicate content loss. Review changes"
+                    " carefully."
+                )
+                if self.backup_enabled:
+                    print("  Backup available at:", file_path + ".backup")
 
             # Write fixed content
             with open(file_path, "w") as f:
@@ -2138,7 +2175,11 @@ struct MojoSyntaxChecker(Copyable, Movable):
         return "\n".join(fixed_lines)
 
     fn fix_documentation_issues(self, content: String) -> String:
-        """Fix basic documentation issues."""
+        """Fix basic documentation issues.
+
+        This method is conservative and only adds missing docstrings without
+        modifying existing content to prevent content loss.
+        """
         lines = content.split("\n")
         fixed_lines = List[String]()
 
@@ -2146,78 +2187,41 @@ struct MojoSyntaxChecker(Copyable, Movable):
         while i < len(lines):
             line = lines[i]
 
-            # Add basic docstrings for functions missing them
+            # Conservative approach: Only add docstrings for functions that clearly lack them
+            # Avoid complex parsing that might skip content
             if line.strip().startswith("fn ") and ("(" in line or "[" in line):
-                # Find the end of the function signature
-                signature_start = i
-                signature_end_index = i
-                paren_count = 0
-                signature_complete = False
+                # Add the function signature line
+                fixed_lines.append(String(line))
 
-                # Count parentheses to find the actual end of the function signature
-                j = i
-                bracket_count = 0  # Track square brackets for generics
-                found_opening_paren = (
-                    False  # Track if we've found the parameter list
-                )
-
-                while j < len(lines) and not signature_complete:
-                    current_line = lines[j]
-
-                    # Count parentheses and brackets in this line
-                    for char_idx in range(len(current_line)):
-                        char = current_line[char_idx]
-                        if char == "[":
-                            bracket_count += 1
-                        elif char == "]":
-                            bracket_count -= 1
-                        elif char == "(":
-                            paren_count += 1
-                            found_opening_paren = True
-                        elif char == ")":
-                            paren_count -= 1
-
-                        # If we've found the opening paren, closed all parentheses and brackets, and found a colon, signature is complete
-                        if (
-                            found_opening_paren
-                            and paren_count == 0
-                            and bracket_count == 0
-                            and ":" in current_line[char_idx:]
-                        ):
-                            signature_end_index = j
-                            signature_complete = True
-                            break
-
-                    j += 1
-
-                # Check if there's a docstring after the complete signature
-                docstring_line_index = signature_end_index + 1
+                # Look ahead to see if there's already a docstring
+                next_line_idx = i + 1
                 has_docstring = False
 
-                if docstring_line_index < len(lines):
-                    next_line = lines[docstring_line_index].strip()
-                    has_docstring = next_line.startswith('"""')
+                # Skip empty lines and check for docstring
+                while next_line_idx < len(lines):
+                    next_line = lines[next_line_idx].strip()
+                    if next_line == "":
+                        next_line_idx += 1
+                        continue
+                    elif next_line.startswith('"""'):
+                        has_docstring = True
+                        break
+                    else:
+                        # Found non-empty, non-docstring content
+                        break
 
-                # Add all lines of the function signature
-                for sig_line_idx in range(
-                    signature_start, signature_end_index + 1
-                ):
-                    fixed_lines.append(String(lines[sig_line_idx]))
-
-                # Add docstring if missing (after the complete signature)
-                if not has_docstring:
+                # If no docstring found and the function signature ends with colon
+                if not has_docstring and line.strip().endswith(":"):
                     # Use the indentation of the function definition line
-                    base_indent = len(lines[signature_start]) - len(
-                        lines[signature_start].lstrip()
-                    )
+                    base_indent = len(line) - len(line.lstrip())
                     docstring = (
                         " " * (base_indent + 4)
                         + '"""TODO: Add function description."""'
                     )
                     fixed_lines.append(docstring)
 
-                # Move index past the processed signature
-                i = signature_end_index + 1
+                # Move to next line normally - don't skip content
+                i += 1
                 continue
             else:
                 fixed_lines.append(String(line))
