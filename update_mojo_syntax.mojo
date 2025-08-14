@@ -2801,11 +2801,33 @@ struct MojoSyntaxChecker(Copyable, Movable):
             True if the path is a symbolic link, False otherwise
 
         Note:
-            Conservative implementation that skips potential symbolic links.
-            Since Mojo's Path API doesn't currently provide direct symlink detection,
-            we use heuristics to identify and skip suspicious paths.
+            Uses subprocess to run test -L command for accurate symlink detection.
+            Falls back to conservative heuristics if subprocess fails.
         """
-        # Conservative approach: check for common symlink patterns
+        try:
+            # Use subprocess to run test -L command for accurate symlink detection
+            path_str = path.path
+
+            from subprocess import run
+
+            # Use test -L command which returns exit code 0 only for symbolic links
+            # We need to capture the exit code, so we'll use a shell command that outputs it
+            command = (
+                "test -L '"
+                + path_str.replace("'", "'\"'\"'")
+                + "' && echo '0' || echo '1'"
+            )
+            result = run(command)
+
+            # Check if the result indicates it's a symbolic link (exit code 0)
+            if result.strip() == "0":
+                return True
+
+        except Exception:
+            # If subprocess fails, fall back to conservative heuristics
+            pass
+
+        # Fallback: Conservative approach using heuristics
         path_str = path.path
 
         # Skip paths that contain ".." which might be used in symlinks
@@ -2831,8 +2853,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
             if not is_allowed:
                 return True
 
-        # For maximum safety with current Mojo limitations, assume no symlinks
-        # This prevents following any potential symbolic links
+        # Default to not a symlink if we can't determine
         return False
 
     fn _escape_shell_path(self, path: String) -> String:
