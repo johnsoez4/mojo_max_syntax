@@ -44,6 +44,9 @@ from time import perf_counter_ns as now
 from sys.arg import argv
 from pathlib import Path
 
+# Type alias for string slice collections
+alias Lines[origin: Origin[False]] = List[StringSlice[origin]]
+
 
 struct SyntaxViolation(Copyable, Movable):
     """Represents a syntax violation found in a Mojo file."""
@@ -175,6 +178,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
     var auto_cleanup_backups: Bool
     var keep_backups: Bool
     var backup_retention_days: Int
+    var compact_output: Bool
 
     fn __init__(out self):
         """Initialize the syntax checker."""
@@ -187,8 +191,11 @@ struct MojoSyntaxChecker(Copyable, Movable):
         self.auto_cleanup_backups = True  # Auto-cleanup by default
         self.keep_backups = False  # Don't keep backups by default
         self.backup_retention_days = 7  # Keep backups for 7 days
+        self.compact_output = False
 
-    fn _is_inside_docstring(self, lines: List[String], line_index: Int) -> Bool:
+    fn _is_inside_docstring[
+        origin: Origin[False]
+    ](self, lines: Lines[origin], line_index: Int) -> Bool:
         """
         Check if the given line index is inside a docstring.
 
@@ -216,9 +223,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
         # If odd number of triple quotes, we're inside a docstring
         return (triple_quote_count % 2) == 1
 
-    fn _is_inside_variable_string(
-        self, lines: List[String], line_index: Int
-    ) -> Bool:
+    fn _is_inside_variable_string[
+        origin: Origin[False]
+    ](self, lines: Lines[origin], line_index: Int) -> Bool:
         """
         Check if the given line index is inside a variable-assigned string literal.
 
@@ -257,9 +264,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
         return False
 
-    fn _should_skip_line_for_violations(
-        self, lines: List[String], line_index: Int
-    ) -> Bool:
+    fn _should_skip_line_for_violations[
+        origin: Origin[False]
+    ](self, lines: Lines[origin], line_index: Int) -> Bool:
         """
         Determine if a line should be skipped for violation detection.
 
@@ -288,9 +295,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
         lines = file_content.split("\n")
 
         # Track import sections for proper organization checking
-        var stdlib_imports = List[Int]()  # Line numbers of stdlib imports
-        var project_imports = List[Int]()  # Line numbers of project imports
-        var gpu_imports = List[Int]()  # Line numbers of GPU imports
+        stdlib_imports = List[Int]()  # Line numbers of stdlib imports
+        project_imports = List[Int]()  # Line numbers of project imports
+        gpu_imports = List[Int]()  # Line numbers of GPU imports
         var first_non_comment_line = -1
 
         # First pass: categorize imports and find first non-comment line
@@ -398,6 +405,37 @@ struct MojoSyntaxChecker(Copyable, Movable):
                     violations.append(violation)
                     break  # Only report once per file
 
+        # Third pass: Check for deprecated platform detection imports
+        for i in range(len(lines)):
+            line = lines[i].strip()
+            line_num = i + 1
+
+            # Check for deprecated platform detection functions in sys imports
+            if line.startswith("from sys import") and (
+                "os_is_linux" in line
+                or "os_is_macos" in line
+                or "os_is_windows" in line
+                or "is_apple_m1" in line
+                or "is_apple_m2" in line
+                or "is_apple_m3" in line
+                or "is_apple_silicon" in line
+                or "CompilationTarget" in line
+                or "_current_arch" in line
+            ):
+                violation = SyntaxViolation(
+                    file_path,
+                    line_num,
+                    "deprecated_platform_imports",
+                    "Platform detection functions moved from sys to sys.info",
+                    (
+                        "Import CompilationTarget from sys.info and use its"
+                        " methods: CompilationTarget.is_linux(),"
+                        " CompilationTarget.is_apple_m1(), etc."
+                    ),
+                    "error",
+                )
+                violations.append(violation)
+
         return violations
 
     fn check_struct_patterns(
@@ -461,7 +499,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
                     violations.append(violation)
 
         # Check for struct initialization order violations
-        var init_violations = self._check_struct_initialization_order(
+        init_violations = self._check_struct_initialization_order(
             lines, file_path
         )
         for violation in init_violations:
@@ -469,9 +507,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
         return violations
 
-    fn _check_struct_initialization_order(
-        self, lines: List[String], file_path: String
-    ) -> List[SyntaxViolation]:
+    fn _check_struct_initialization_order[
+        origin: Origin[False]
+    ](self, lines: Lines[origin], file_path: String) -> List[SyntaxViolation]:
         """Check for struct initialization order violations."""
         violations = List[SyntaxViolation]()
 
@@ -480,13 +518,13 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
             # Look for __init__ method definitions
             if line.startswith("fn __init__("):
-                var indent_level = len(lines[i]) - len(lines[i].lstrip())
+                indent_level = len(lines[i]) - len(lines[i].lstrip())
                 var found_field_assignment = False
 
                 # Scan through the __init__ method until we find a line with same or less indentation
                 for j in range(i + 1, len(lines)):
-                    var current_line = lines[j].strip()
-                    var current_indent = len(lines[j]) - len(lines[j].lstrip())
+                    current_line = lines[j].strip()
+                    current_indent = len(lines[j]) - len(lines[j].lstrip())
 
                     # If we hit a line with same or less indentation (and it's not empty), we've exited the method
                     if len(current_line) > 0 and current_indent <= indent_level:
@@ -562,8 +600,13 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
         return violations
 
-    fn _analyze_struct_traits(
-        self, lines: List[String], struct_line_idx: Int, file_path: String
+    fn _analyze_struct_traits[
+        origin: Origin[False]
+    ](
+        self,
+        lines: Lines[origin],
+        struct_line_idx: Int,
+        file_path: String,
     ) -> List[SyntaxViolation]:
         """Analyze struct for trait requirements based on lifecycle methods."""
         violations = List[SyntaxViolation]()
@@ -675,13 +718,13 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
         # Find struct name
         if "struct " in struct_line:
-            var start_idx = struct_line.find("struct ") + 7
-            var end_idx = len(struct_line)
+            start_idx = struct_line.find("struct ") + 7
+            end_idx = len(struct_line)
 
             if "(" in struct_line:
                 end_idx = struct_line.find("(")
                 # Check for traits in parentheses
-                var traits_section = struct_line[
+                traits_section = struct_line[
                     struct_line.find("(") : struct_line.find(")") + 1
                 ]
                 has_copyable = "Copyable" in traits_section
@@ -700,9 +743,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
         return StructInfo(name, has_copyable, has_movable)
 
-    fn _extract_struct_body(
-        self, lines: List[String], struct_start: Int
-    ) -> List[String]:
+    fn _extract_struct_body[
+        origin: Origin[False]
+    ](self, lines: Lines[origin], struct_start: Int) -> List[String]:
         """Extract the body of a struct definition."""
         body = List[String]()
         var i = struct_start + 1
@@ -719,14 +762,14 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 continue
 
             # Calculate indentation
-            var current_indent = len(line) - len(line.lstrip())
+            current_indent = len(line) - len(line.lstrip())
 
             # If we haven't found the body yet, look for first indented content
             if not found_body:
                 if current_indent > 0:
                     indent_level = current_indent
                     found_body = True
-                    body.append(line)
+                    body.append(String(line))
                 i += 1
                 continue
 
@@ -739,7 +782,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 # We've reached the end of the struct
                 break
 
-            body.append(line)
+            body.append(String(line))
             i += 1
 
         return body
@@ -802,7 +845,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 continue
 
             # Calculate current indentation
-            var current_indent = len(line) - len(line.lstrip())
+            current_indent = len(line) - len(line.lstrip())
 
             # If we're back to method level or less, we've reached the end
             if current_indent <= method_indent and String(stripped) != "":
@@ -859,9 +902,11 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
         return non_trivial_lines == 0
 
-    fn _check_unsafe_pointer_ownership(
+    fn _check_unsafe_pointer_ownership[
+        origin: Origin[False]
+    ](
         self,
-        lines: List[String],
+        lines: Lines[origin],
         line_index: Int,
         file_content: String,
         file_path: String,
@@ -869,7 +914,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
         """
         Check UnsafePointer parameters for ownership violations.
 
-        Only flags UnsafePointer parameters that are explicitly owned by the function
+        Only flags UnsafePointer parameters that are explicitly var by the function
         and require memory management. Borrowed parameters (default) are not flagged.
 
         Args:
@@ -879,7 +924,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
             file_path: Path to the file being checked.
 
         Returns:
-            Optional violation if owned UnsafePointer lacks proper memory management.
+            Optional violation if var UnsafePointer lacks proper memory management.
         """
         line = lines[line_index].strip()
         line_num = line_index + 1
@@ -892,30 +937,30 @@ struct MojoSyntaxChecker(Copyable, Movable):
         if self._is_gpu_kernel_function(lines, line_index):
             return None  # GPU kernels use borrowed pointers managed by DeviceContext
 
-        # Check if this is an explicitly owned parameter
-        if not self._is_owned_unsafe_pointer_parameter(String(line)):
-            return None  # Only flag owned parameters
+        # Check if this is an explicitly var parameter (replaces owned)
+        if not self._is_var_unsafe_pointer_parameter(String(line)):
+            return None  # Only flag var parameters
 
-        # Check if the function properly manages the owned memory
+        # Check if the function properly manages the var memory
         if self._has_proper_memory_management(lines, line_index, file_content):
             return None  # Proper management found
 
-        # Create violation for owned UnsafePointer without proper management
+        # Create violation for var UnsafePointer without proper management
         return SyntaxViolation(
             file_path,
             line_num,
             "performance_memory_leak",
-            "Owned UnsafePointer parameter without explicit memory management",
+            "var UnsafePointer parameter without explicit memory management",
             (
-                "Add .free() call for owned UnsafePointer parameters or use"
+                "Add .free() call for var UnsafePointer parameters or use"
                 " RAII patterns"
             ),
             "warning",
         )
 
-    fn _is_gpu_kernel_function(
-        self, lines: List[String], line_index: Int
-    ) -> Bool:
+    fn _is_gpu_kernel_function[
+        origin: Origin[False]
+    ](self, lines: Lines[origin], line_index: Int) -> Bool:
         """Check if the current line is part of a GPU kernel function definition.
         """
         # Look backwards for function definition
@@ -936,20 +981,24 @@ struct MojoSyntaxChecker(Copyable, Movable):
             i -= 1
         return False
 
-    fn _is_owned_unsafe_pointer_parameter(self, line: String) -> Bool:
-        """Check if line contains an explicitly owned UnsafePointer parameter.
-        """
-        # Look for explicit ownership annotations
+    fn _is_var_unsafe_pointer_parameter(self, line: String) -> Bool:
+        """Check if line contains an explicitly var UnsafePointer parameter."""
+        # Look for explicit var ownership annotations (replaces owned)
         return (
             "UnsafePointer" in line
-            and ("owned " in line or "var " in line)
+            and "var " in line
             and ":" in line  # Parameter declaration
         )
 
-    fn _has_proper_memory_management(
-        self, lines: List[String], line_index: Int, file_content: String
+    fn _has_proper_memory_management[
+        origin: Origin[False]
+    ](
+        self,
+        lines: Lines[origin],
+        line_index: Int,
+        file_content: String,
     ) -> Bool:
-        """Check if function has proper memory management for owned UnsafePointer.
+        """Check if function has proper memory management for var UnsafePointer.
         """
         # Find the function that contains this parameter
         function_body = self._extract_function_body(lines, line_index)
@@ -961,9 +1010,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
         return False
 
-    fn _extract_function_body(
-        self, lines: List[String], param_line_index: Int
-    ) -> List[String]:
+    fn _extract_function_body[
+        origin: Origin[False]
+    ](self, lines: Lines[origin], param_line_index: Int) -> List[String]:
         """Extract the body of the function containing the given parameter line.
         """
         body = List[String]()
@@ -1019,7 +1068,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 if indent_level == 0:
                     indent_level = current_indent
 
-                body.append(line)
+                body.append(String(line))
 
             i += 1
 
@@ -1069,11 +1118,60 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 )
                 violations.append(violation)
 
+            # Check for deprecated 'owned' parameter syntax
+            if "owned " in line and ("fn " in line or ":" in line):
+                violation = SyntaxViolation(
+                    file_path,
+                    line_num,
+                    "parameter_declaration",
+                    "Deprecated 'owned' parameter syntax detected",
+                    "Replace 'owned' with 'var' for parameter ownership",
+                    "error",
+                )
+                violations.append(violation)
+
+            # Check for unnecessary var usage (single assignments)
+            if (
+                line.startswith("var ")
+                and "=" in line
+                and not line.startswith("var _")
+            ):
+                # Extract variable name and check if it's a single assignment
+                var_part = String(line.split("var ")[1].split("=")[0].strip())
+
+                # Skip if it's a type declaration without assignment (var name: Type)
+                if ":" in var_part and "=" not in String(line.split(":")[0]):
+                    continue
+
+                # Skip if it's a struct field declaration
+                if self._is_inside_struct_definition(lines, i):
+                    continue
+
+                # Skip if it's a function parameter
+                if self._is_function_parameter_line(lines, i):
+                    continue
+
+                # Check if this variable is reassigned later in the same scope
+                if not self._is_variable_reassigned(lines, i, var_part):
+                    violation = SyntaxViolation(
+                        file_path,
+                        line_num,
+                        "variable_declaration_unnecessary_var",
+                        "Unnecessary 'var' for single-assignment variable '"
+                        + var_part
+                        + "'",
+                        "Use direct assignment: " + var_part + " = ...",
+                        "warning",
+                    )
+                    violations.append(violation)
+
             # Check for DeviceContext variable naming convention
             if "= DeviceContext()" in line:
                 # Extract variable name
                 if "var " in line:
-                    var_part = line.split("var ")[1].split("=")[0].strip()
+                    var_part = String(
+                        line.split("var ")[1].split("=")[0].strip()
+                    )
                     # Check if variable name follows convention
                     is_valid_name = (
                         var_part == "ctx"
@@ -1101,6 +1199,54 @@ struct MojoSyntaxChecker(Copyable, Movable):
                         violations.append(violation)
 
         return violations
+
+    fn _is_inside_struct_definition(
+        self, lines: Lines[_], line_index: Int
+    ) -> Bool:
+        """Check if the line is inside a struct definition (field declaration).
+        """
+        # Look backwards for struct definition
+        for i in range(line_index - 1, -1, -1):
+            line = lines[i].strip()
+            if line.startswith("struct ") and ":" in line:
+                return True
+            elif (
+                line.startswith("fn ")
+                or line.startswith("alias ")
+                or line.startswith("from ")
+            ):
+                return False
+        return False
+
+    fn _is_function_parameter_line(
+        self, lines: Lines[_], line_index: Int
+    ) -> Bool:
+        """Check if the line is a function parameter declaration."""
+        line = lines[line_index].strip()
+        # Look for function parameter patterns
+        return "fn " in line and "(" in line and ")" in line
+
+    fn _is_variable_reassigned(
+        self, lines: Lines[_], start_index: Int, var_name: String
+    ) -> Bool:
+        """Check if a variable is reassigned after its initial declaration."""
+        # Look forward from the declaration to find reassignments
+        for i in range(start_index + 1, len(lines)):
+            line = lines[i].strip()
+
+            # Stop at function/struct boundaries
+            if line.startswith("fn ") or line.startswith("struct "):
+                break
+
+            # Check for reassignment (not declaration)
+            if (
+                line.startswith(var_name + " =")
+                or line.startswith(var_name + "+=")
+                or line.startswith(var_name + "-=")
+            ):
+                return True
+
+        return False
 
     fn check_gpu_patterns(
         self, file_content: String, file_path: String
@@ -1194,9 +1340,9 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
         return violations
 
-    fn assess_docstring_quality(
-        self, lines: List[String], start_line: Int
-    ) -> (Bool, String, String):
+    fn assess_docstring_quality[
+        origin: Origin[False]
+    ](self, lines: Lines[origin], start_line: Int) -> (Bool, String, String):
         """
         Assess the quality of a docstring starting at the given line.
 
@@ -1912,6 +2058,10 @@ struct MojoSyntaxChecker(Copyable, Movable):
             with open(file_path, "r") as f:
                 content = f.read()
 
+            # Store original content metrics for safety validation
+            original_line_count = len(content.split("\n"))
+            original_char_count = len(content)
+
             # Create backup if enabled
             if self.backup_enabled:
                 backup_path = file_path + ".backup"
@@ -1924,6 +2074,39 @@ struct MojoSyntaxChecker(Copyable, Movable):
             fixed_content = self.fix_variable_declarations(fixed_content)
             fixed_content = self.fix_documentation_issues(fixed_content)
             fixed_content = self.fix_trait_issues(fixed_content)
+
+            # Safety check: Validate content wasn't significantly reduced
+            fixed_line_count = len(fixed_content.split("\n"))
+            fixed_char_count = len(fixed_content)
+
+            # Allow for minor reductions due to whitespace cleanup, but flag major losses
+            line_reduction_ratio = Float64(
+                original_line_count - fixed_line_count
+            ) / Float64(original_line_count)
+            char_reduction_ratio = Float64(
+                original_char_count - fixed_char_count
+            ) / Float64(original_char_count)
+
+            if line_reduction_ratio > 0.1 or char_reduction_ratio > 0.1:
+                print("⚠️  WARNING: Significant content reduction detected!")
+                print(
+                    "  Original lines:",
+                    original_line_count,
+                    "-> Fixed lines:",
+                    fixed_line_count,
+                )
+                print(
+                    "  Original chars:",
+                    original_char_count,
+                    "-> Fixed chars:",
+                    fixed_char_count,
+                )
+                print(
+                    "  This may indicate content loss. Review changes"
+                    " carefully."
+                )
+                if self.backup_enabled:
+                    print("  Backup available at:", file_path + ".backup")
 
             # Write fixed content
             with open(file_path, "w") as f:
@@ -1988,7 +2171,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
             remove(backup_path)
             print("✅ Cleaned up backup:", backup_path)
             return True
-        except:
+        except e:
             # Backup file doesn't exist or couldn't be deleted
             return False
 
@@ -2011,10 +2194,10 @@ struct MojoSyntaxChecker(Copyable, Movable):
                         remove(file_path)
                         print("🗑️  Removed backup:", file_path)
                         cleaned_count += 1
-                    except:
+                    except e:
                         continue  # Skip files we can't process
 
-        except:
+        except e:
             print("Warning: Could not perform automatic backup cleanup")
 
         return cleaned_count
@@ -2049,7 +2232,7 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 fixed_line = line.replace("from ..", "from src.")
                 fixed_lines.append(fixed_line)
             else:
-                fixed_lines.append(line)
+                fixed_lines.append(String(line))
 
         return "\n".join(fixed_lines)
 
@@ -2066,13 +2249,45 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 fixed_lines.append(
                     "# TODO: Review variable declaration - " + fixed_line
                 )
+            # Fix deprecated 'owned' parameter syntax
+            elif "owned " in line and ("fn " in line or ":" in line):
+                # Convert owned to var (parameter ownership)
+                fixed_line = line.replace("owned ", "var ")
+                fixed_lines.append(fixed_line)
+            # Fix unnecessary var usage for single assignments
+            elif (
+                line.strip().startswith("var ")
+                and "=" in line
+                and not line.strip().startswith("var _")
+            ):
+                stripped_line = line.strip()
+                var_part = String(
+                    stripped_line.split("var ")[1].split("=")[0].strip()
+                )
+
+                # Skip struct field declarations and function parameters
+                if not (
+                    ":" in var_part
+                    and "=" not in String(stripped_line.split(":")[0])
+                ):
+                    # Convert var assignment to direct assignment
+                    fixed_line = line.replace(
+                        "var " + var_part + " =", var_part + " ="
+                    )
+                    fixed_lines.append(String(fixed_line))
+                else:
+                    fixed_lines.append(String(line))
             else:
-                fixed_lines.append(line)
+                fixed_lines.append(String(line))
 
         return "\n".join(fixed_lines)
 
     fn fix_documentation_issues(self, content: String) -> String:
-        """Fix basic documentation issues."""
+        """Fix basic documentation issues.
+
+        This method is conservative and only adds missing docstrings without
+        modifying existing content to prevent content loss.
+        """
         lines = content.split("\n")
         fixed_lines = List[String]()
 
@@ -2080,81 +2295,44 @@ struct MojoSyntaxChecker(Copyable, Movable):
         while i < len(lines):
             line = lines[i]
 
-            # Add basic docstrings for functions missing them
+            # Conservative approach: Only add docstrings for functions that clearly lack them
+            # Avoid complex parsing that might skip content
             if line.strip().startswith("fn ") and ("(" in line or "[" in line):
-                # Find the end of the function signature
-                signature_start = i
-                signature_end_index = i
-                paren_count = 0
-                signature_complete = False
+                # Add the function signature line
+                fixed_lines.append(String(line))
 
-                # Count parentheses to find the actual end of the function signature
-                j = i
-                bracket_count = 0  # Track square brackets for generics
-                found_opening_paren = (
-                    False  # Track if we've found the parameter list
-                )
-
-                while j < len(lines) and not signature_complete:
-                    current_line = lines[j]
-
-                    # Count parentheses and brackets in this line
-                    for char_idx in range(len(current_line)):
-                        char = current_line[char_idx]
-                        if char == "[":
-                            bracket_count += 1
-                        elif char == "]":
-                            bracket_count -= 1
-                        elif char == "(":
-                            paren_count += 1
-                            found_opening_paren = True
-                        elif char == ")":
-                            paren_count -= 1
-
-                        # If we've found the opening paren, closed all parentheses and brackets, and found a colon, signature is complete
-                        if (
-                            found_opening_paren
-                            and paren_count == 0
-                            and bracket_count == 0
-                            and ":" in current_line[char_idx:]
-                        ):
-                            signature_end_index = j
-                            signature_complete = True
-                            break
-
-                    j += 1
-
-                # Check if there's a docstring after the complete signature
-                docstring_line_index = signature_end_index + 1
+                # Look ahead to see if there's already a docstring
+                next_line_idx = i + 1
                 has_docstring = False
 
-                if docstring_line_index < len(lines):
-                    next_line = lines[docstring_line_index].strip()
-                    has_docstring = next_line.startswith('"""')
+                # Skip empty lines and check for docstring
+                while next_line_idx < len(lines):
+                    next_line = lines[next_line_idx].strip()
+                    if next_line == "":
+                        next_line_idx += 1
+                        continue
+                    elif next_line.startswith('"""'):
+                        has_docstring = True
+                        break
+                    else:
+                        # Found non-empty, non-docstring content
+                        break
 
-                # Add all lines of the function signature
-                for sig_line_idx in range(
-                    signature_start, signature_end_index + 1
-                ):
-                    fixed_lines.append(lines[sig_line_idx])
-
-                # Add docstring if missing (after the complete signature)
-                if not has_docstring:
+                # If no docstring found and the function signature ends with colon
+                if not has_docstring and line.strip().endswith(":"):
                     # Use the indentation of the function definition line
-                    base_indent = len(lines[signature_start]) - len(
-                        lines[signature_start].lstrip()
-                    )
+                    base_indent = len(line) - len(line.lstrip())
                     docstring = (
                         " " * (base_indent + 4)
                         + '"""TODO: Add function description."""'
                     )
                     fixed_lines.append(docstring)
 
-                # Move index past the processed signature
-                i = signature_end_index + 1
+                # Move to next line normally - don't skip content
+                i += 1
                 continue
             else:
-                fixed_lines.append(line)
+                fixed_lines.append(String(line))
                 i += 1
 
         return "\n".join(fixed_lines)
@@ -2188,19 +2366,23 @@ struct MojoSyntaxChecker(Copyable, Movable):
                         lines, i, struct_violations
                     )
                 else:
-                    fixed_lines.append(line)
+                    fixed_lines.append(String(line))
             else:
-                fixed_lines.append(line)
+                fixed_lines.append(String(line))
 
             i += 1
 
         return "\n".join(fixed_lines)
 
-    fn _apply_struct_trait_fixes(
-        self, struct_line: String, violations: List[SyntaxViolation]
+    fn _apply_struct_trait_fixes[
+        origin: Origin[False]
+    ](
+        self,
+        struct_line: StringSlice[origin],
+        violations: List[SyntaxViolation],
     ) -> String:
         """Apply trait fixes to a struct definition line."""
-        fixed_line = struct_line
+        fixed_line = String(struct_line)
 
         for i in range(len(violations)):
             violation = violations[i]
@@ -2232,9 +2414,11 @@ struct MojoSyntaxChecker(Copyable, Movable):
             return line.replace(trait_name, "")
         return line
 
-    fn _skip_redundant_methods(
+    fn _skip_redundant_methods[
+        origin: Origin[False]
+    ](
         self,
-        lines: List[String],
+        lines: Lines[origin],
         struct_start: Int,
         violations: List[SyntaxViolation],
     ) -> Int:
@@ -2244,6 +2428,32 @@ struct MojoSyntaxChecker(Copyable, Movable):
 
     fn print_report(self, reports: List[ComplianceReport]):
         """Print a comprehensive compliance report."""
+        # Compact output mode for fully compliant files
+        if self.compact_output:
+            for i in range(len(reports)):
+                report = reports[i]
+                # Count issues (exclude observations)
+                issues_count = 0
+                for j in range(len(report.violations)):
+                    v = report.violations[j]
+                    if v.severity == "error" or v.severity == "warning":
+                        issues_count += 1
+                if issues_count == 0 and Int(report.compliance_score) == 100:
+                    print("✅ " + report.file_path + " - 100% compliant")
+                else:
+                    print(
+                        "❌ "
+                        + report.file_path
+                        + " - "
+                        + String(Int(report.compliance_score))
+                        + "% compliant ("
+                        + String(issues_count)
+                        + " violations)"
+                    )
+                    # Fall back to detailed output for files with issues
+                    self._print_detailed_report_for_file(report)
+            return
+
         print("=" * 80)
         print("MOJO SYNTAX COMPLIANCE REPORT")
         print("=" * 80)
@@ -2378,36 +2588,100 @@ struct MojoSyntaxChecker(Copyable, Movable):
                         ":",
                         violation.description,
                     )
-                    print("    Type:", violation.violation_type)
-                    print("    Fix:", violation.suggested_fix)
-                    print("")
 
-                # Display one-line docstrings second
-                for j in range(len(one_line_docstrings)):
-                    violation = one_line_docstrings[j]
-                    print(
-                        "  ℹ️ Line",
-                        violation.line_number,
-                        ":",
-                        violation.description,
-                    )
-                    print("    Type:", violation.violation_type)
-                    print("    Fix:", violation.suggested_fix)
-                    print("")
+    fn _print_detailed_report_for_file(self, report: ComplianceReport):
+        """Print the existing detailed output for a single file report."""
+        print("")
+        print("File:", report.file_path)
+        print("Compliance Score:", report.compliance_score, "%")
+        print("Lines:", report.total_lines)
 
-            # Show usage hint when observations are hidden
-            if len(observations) > 0 and not self.show_observations:
-                print("")
+        # Separate violations into Issues and Observations first
+        issues = List[SyntaxViolation]()
+        observations = List[SyntaxViolation]()
+
+        for j in range(len(report.violations)):
+            violation = report.violations[j]
+            if violation.severity == "error" or violation.severity == "warning":
+                issues.append(violation)
+            else:
+                observations.append(violation)
+
+        # Print correct violation count (only actual violations, not observations)
+        print("Violations:", len(issues))
+
+        # Display Issues first
+        if len(issues) > 0:
+            print("")
+            print("Issues found (" + String(len(issues)) + "):")
+
+            for j in range(len(issues)):
+                violation = issues[j]
+                severity_marker = "❌" if violation.severity == "error" else "⚠️"
                 print(
-                    "Use --show-observations to display "
-                    + String(len(observations))
-                    + " suggestions and style recommendations"
+                    "  " + severity_marker + " Line",
+                    violation.line_number,
+                    ":",
+                    violation.description,
                 )
+                print("    Type:", violation.violation_type)
+                print("    Fix:", violation.suggested_fix)
+                print("")
 
-            if len(issues) == 0 and len(observations) == 0:
-                print("✅ No violations found!")
+        # Display Observations second (only if enabled)
+        if len(observations) > 0 and self.show_observations:
+            print("Observations (" + String(len(observations)) + "):")
 
-            print("-" * 40)
+            # Separate suggestions from one-line docstrings
+            suggestions = List[SyntaxViolation]()
+            one_line_docstrings = List[SyntaxViolation]()
+
+            for j in range(len(observations)):
+                violation = observations[j]
+                if "Appropriate one-line docstring" in violation.description:
+                    one_line_docstrings.append(violation)
+                else:
+                    suggestions.append(violation)
+
+            # Display suggestions first
+            for j in range(len(suggestions)):
+                violation = suggestions[j]
+                print(
+                    "  ℹ️ Line",
+                    violation.line_number,
+                    ":",
+                    violation.description,
+                )
+                print("    Type:", violation.violation_type)
+                print("    Fix:", violation.suggested_fix)
+                print("")
+
+            # Display one-line docstrings second
+            for j in range(len(one_line_docstrings)):
+                violation = one_line_docstrings[j]
+                print(
+                    "  ℹ️ Line",
+                    violation.line_number,
+                    ":",
+                    violation.description,
+                )
+                print("    Type:", violation.violation_type)
+                print("    Fix:", violation.suggested_fix)
+                print("")
+
+        # Show usage hint when observations are hidden
+        if len(observations) > 0 and not self.show_observations:
+            print("")
+            print(
+                "Use --show-observations to display "
+                + String(len(observations))
+                + " suggestions and style recommendations"
+            )
+
+        if len(issues) == 0 and len(observations) == 0:
+            print("✅ No violations found!")
+
+        print("-" * 40)
 
     fn scan_directory(
         mut self, directory_path: String
@@ -2499,6 +2773,10 @@ struct MojoSyntaxChecker(Copyable, Movable):
                 # Construct full path by joining directory with entry name
                 entry_path = directory / entry_name.path
 
+                # Skip symbolic links to prevent following them
+                if self._is_symbolic_link(entry_path):
+                    continue
+
                 if entry_path.is_dir():
                     # Recursively scan subdirectories
                     self._discover_mojo_files(entry_path, mojo_files)
@@ -2509,9 +2787,88 @@ struct MojoSyntaxChecker(Copyable, Movable):
                         ".mojo"
                     ) or file_path_str.endswith(".🔥"):
                         mojo_files.append(file_path_str)
-        except:
+        except Exception:
             # Skip directories that can't be accessed (permissions, etc.)
             pass
+
+    fn _is_symbolic_link(self, path: Path) -> Bool:
+        """Check if a path is a symbolic link.
+
+        Args:
+            path: Path object to check
+
+        Returns:
+            True if the path is a symbolic link, False otherwise
+
+        Note:
+            Uses subprocess to run test -L command for accurate symlink detection.
+            Falls back to conservative heuristics if subprocess fails.
+        """
+        try:
+            # Use subprocess to run test -L command for accurate symlink detection
+            path_str = path.path
+
+            from subprocess import run
+
+            # Use test -L command which returns exit code 0 only for symbolic links
+            # We need to capture the exit code, so we'll use a shell command that outputs it
+            command = (
+                "test -L '"
+                + path_str.replace("'", "'\"'\"'")
+                + "' && echo '0' || echo '1'"
+            )
+            result = run(command)
+
+            # Check if the result indicates it's a symbolic link (exit code 0)
+            if result.strip() == "0":
+                return True
+
+        except Exception:
+            # If subprocess fails, fall back to conservative heuristics
+            pass
+
+        # Fallback: Conservative approach using heuristics
+        path_str = path.path
+
+        # Skip paths that contain ".." which might be used in symlinks
+        if "../" in path_str or "/.." in path_str:
+            return True
+
+        # Skip hidden files/directories that start with "." (except current dir)
+        basename = self._get_basename(path_str)
+        if basename.startswith(".") and basename != "." and basename != "..":
+            # Allow common development directories but skip others
+            allowed_hidden = List[String]()
+            allowed_hidden.append(".git")
+            allowed_hidden.append(".pixi")
+            allowed_hidden.append(".vscode")
+            allowed_hidden.append(".idea")
+
+            is_allowed = False
+            for i in range(len(allowed_hidden)):
+                if basename == allowed_hidden[i]:
+                    is_allowed = True
+                    break
+
+            if not is_allowed:
+                return True
+
+        # Default to not a symlink if we can't determine
+        return False
+
+    fn _escape_shell_path(self, path: String) -> String:
+        """Escape a file path for safe use in shell commands.
+
+        Args:
+            path: File path to escape
+
+        Returns:
+            Shell-escaped path string
+        """
+        # Simple escaping: wrap in single quotes and escape any single quotes
+        # This handles spaces and most special characters safely
+        escaped = path.replace("'", "'\"'\"'")  # Escape single quotes
+        return "'" + escaped + "'"
 
     fn _get_basename(self, path: String) -> String:
         """Get the basename (last component) of a path."""
@@ -2584,6 +2941,7 @@ fn print_usage():
         "  --check-docstring-code Enable syntax checking within docstring code"
         " examples"
     )
+    print("  --compact              Compact output for fully compliant files")
     print("  --help                 Show this help message")
     print("")
     print("✅ Correct Usage Examples:")
@@ -2600,6 +2958,11 @@ fn print_usage():
         " --show-observations"
     )
     print("  mojo update_mojo_syntax.mojo --scan src/ --show-observations")
+    print("  mojo update_mojo_syntax.mojo --scan src/ --compact")
+    print(
+        "  mojo update_mojo_syntax.mojo --validate src/utils/gpu_matrix.mojo"
+        " --compact"
+    )
     print("")
     print("❌ Incorrect Usage (will show help instead):")
     print(
@@ -2643,6 +3006,9 @@ struct TestStruct:
 fn test_function():
     print("Missing docstring")
     raise Error("Test error")
+
+fn append(mut self, owned page: AsDLPage):
+    print("Deprecated owned syntax")
 """
 
     print("Testing pattern detection on sample code...")
@@ -2715,6 +3081,8 @@ fn main() raises:
             checker.show_observations = True
         elif arg == "--check-docstring-code":
             checker.check_docstring_code = True
+        elif arg == "--compact":
+            checker.compact_output = True
         elif arg == "--keep-backups":
             checker.keep_backups = True
             checker.auto_cleanup_backups = False
@@ -2724,7 +3092,7 @@ fn main() raises:
             if i + 1 < len(args):
                 try:
                     checker.backup_retention_days = atol(String(args[i + 1]))
-                except:
+                except Exception:
                     print(
                         "Warning: Invalid retention days value, using"
                         " default (7)"

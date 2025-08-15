@@ -1,6 +1,46 @@
 # Mojo Syntax Reference & Coding Standards
 
-This file serves as the centralized guide for Mojo language best practices and syntax standards. All Mojo code creation and modification should reference this file to ensure consistent, idiomatic code.
+**MANDATORY COMPLIANCE**: This file defines the complete set of guidelines, checks, and design patterns that **MUST BE APPLIED** to every Mojo file creation and refactoring, with **NO EXCEPTIONS**.
+
+## 🚨 **CRITICAL REQUIREMENT**
+
+**Every time you create or refactor a Mojo file, you MUST:**
+1. **Apply ALL guidelines** from this document systematically
+2. **Check ALL design patterns** and ensure compliance
+3. **Validate ALL syntax rules** are followed
+4. **Verify ALL documentation standards** are met
+5. **Confirm ALL error handling patterns** are implemented
+6. **Test ALL functionality** after changes
+
+**No partial compliance is acceptable. Every guideline must be applied.**
+
+## 🎯 **SYSTEMATIC APPLICATION GUARANTEE**
+
+**To ensure 100% compliance, follow this systematic approach:**
+
+### **🔍 BEFORE Starting Any Mojo Work:**
+1. **Read this entire document** to understand all requirements
+2. **Review the mandatory checklists** for each area
+3. **Plan your implementation** to include all required patterns
+4. **Set up validation workflow** using automation tools
+
+### **⚡ DURING Implementation:**
+1. **Apply guidelines as you code** - don't defer to later
+2. **Use the automation script** for real-time validation
+3. **Check each section** against its mandatory checklist
+4. **Document as you implement** - don't leave it for later
+
+### **✅ AFTER Implementation:**
+1. **Run complete validation**: `mojo run mojo_max_syntax/update_mojo_syntax.mojo --validate <file>`
+2. **Verify 100% compliance** - no violations allowed
+3. **Test all functionality** to ensure nothing is broken
+4. **Review all checklists** one final time
+
+### **🚨 ZERO TOLERANCE POLICY:**
+- **No exceptions** to any guideline
+- **No "I'll fix it later"** - fix it now
+- **No "this is just a quick test"** - all code follows standards
+- **No "the automation will catch it"** - apply guidelines proactively
 
 ## 🔥 Mojo File Extensions
 
@@ -23,31 +63,99 @@ mojo ./mojo_max_syntax/update_mojo_syntax.mojo --scan src/
 
 **Note**: While both extensions are supported, it's recommended to use `.mojo` for better compatibility with text editors and development tools that may not handle emoji file extensions properly.
 
-## 📋 Table of Contents
+## 📋 **MANDATORY COMPLIANCE CHECKLIST**
+
+**Before completing ANY Mojo file work, verify ALL items below:**
+
+### **🔥 PHASE 1: CORE SYNTAX COMPLIANCE**
+- [ ] **Variable Declarations**: Applied `var` vs direct assignment rules
+- [ ] **Function Signatures**: All parameters and returns properly typed
+- [ ] **Error Handling**: Added `raises` annotations and proper error messages
+- [ ] **Import Organization**: Clean, organized, no unused imports
+- [ ] **Struct Design**: Proper traits, initialization, and methods
+- [ ] **Memory Management**: Correct ownership and lifetime patterns
+
+### **🔥 PHASE 2: DOCUMENTATION COMPLIANCE**
+- [ ] **Module Documentation**: Comprehensive module-level docstring
+- [ ] **Function Documentation**: Multi-line docstrings with Args/Returns/Raises
+- [ ] **Struct Documentation**: Detailed struct and method documentation
+- [ ] **Inline Comments**: Meaningful comments only, no redundant ones
+- [ ] **Code Examples**: Avoid in docstrings due to LSP issues
+
+### **🔥 PHASE 3: DESIGN PATTERN COMPLIANCE**
+- [ ] **Naming Conventions**: Consistent snake_case, descriptive names
+- [ ] **Code Organization**: Logical structure and grouping
+- [ ] **Performance Patterns**: Efficient algorithms and data structures
+- [ ] **GPU Patterns**: Proper MAX Engine usage and fallbacks
+- [ ] **Testing Integration**: Testable design and validation
+
+### **🔥 PHASE 4: FINAL VALIDATION**
+- [ ] **Compilation**: File compiles without errors or warnings
+- [ ] **Functionality**: All features work as expected
+- [ ] **Syntax Automation**: Passes automated compliance checking
+- [ ] **Performance**: No performance regressions introduced
+- [ ] **Integration**: Works correctly with existing codebase
+
+---
+
+## 🚀 **SYSTEMATIC APPLICATION WORKFLOW**
+
+**Use this workflow for EVERY Mojo file creation or refactoring:**
+
+### **Step 1: Pre-Work Analysis**
+1. **Understand Requirements**: What does this file need to accomplish?
+2. **Review Existing Code**: Check current patterns and dependencies
+3. **Plan Structure**: Design the file organization and components
+4. **Identify Patterns**: Determine which design patterns apply
+
+### **Step 2: Implementation with Guidelines**
+1. **Start with Documentation**: Write comprehensive module docstring
+2. **Organize Imports**: Follow import organization patterns
+3. **Define Structures**: Apply struct design patterns with proper traits
+4. **Implement Functions**: Use proper signatures, error handling, documentation
+5. **Apply Variable Rules**: Use correct `var` vs direct assignment patterns
+6. **Add Error Handling**: Include `raises` annotations and descriptive errors
+
+### **Step 3: Validation and Refinement**
+1. **Run Syntax Automation**: `mojo run mojo_max_syntax/update_mojo_syntax.mojo --validate <file>`
+2. **Check Compilation**: Ensure file compiles without warnings
+3. **Test Functionality**: Verify all features work correctly
+4. **Review Documentation**: Ensure all docstrings are comprehensive
+5. **Optimize Performance**: Apply performance best practices
+6. **Final Compliance Check**: Verify ALL checklist items are complete
+
+### **Step 4: Integration Testing**
+1. **Test with Existing Code**: Ensure compatibility
+2. **Run Related Tests**: Verify no regressions
+3. **Performance Validation**: Check for performance impacts
+4. **Documentation Updates**: Update related documentation if needed
+
+---
+
+## 📋 **DETAILED GUIDELINES REFERENCE**
 
 ### **Core Syntax Standards**
-1. [Version Commands & Environment](#version-commands--environment)
-2. [Import Patterns & Organization](#import-patterns--organization)
-3. [Function Definitions & Signatures](#function-definitions--signatures)
-4. [Struct Definitions & Methods](#struct-definitions--methods)
-5. [Error Handling Patterns](#error-handling-patterns)
-6. [Variable Declarations](#variable-declarations)
+1. [Variable Declaration Rules](#variable-declaration-rules) ⚠️ **CRITICAL**
+2. [Function Definitions & Signatures](#function-definitions--signatures) ⚠️ **CRITICAL**
+3. [Error Handling Patterns](#error-handling-patterns) ⚠️ **CRITICAL**
+4. [Documentation Standards](#documentation-standards) ⚠️ **CRITICAL**
+5. [Struct Definitions & Methods](#struct-definitions--methods) ⚠️ **CRITICAL**
+6. [Import Patterns & Organization](#import-patterns--organization)
 7. [Memory Management](#memory-management)
 8. [External Function Calls (FFI)](#external-function-calls-ffi)
 9. [MAX Engine GPU Programming](#max-engine-gpu-programming)
 10. [Naming Conventions](#naming-conventions)
-11. [Documentation Standards](#documentation-standards)
-12. [Code Formatting](#code-formatting)
-13. [Testing Patterns](#testing-patterns)
-14. [Performance Benchmarking](#performance-benchmarking)
-15. [GPU Simulation Labeling](#gpu-simulation-labeling)
-16. [Common Patterns & Idioms](#common-patterns--idioms)
+11. [Code Formatting](#code-formatting)
+12. [Testing Patterns](#testing-patterns)
+13. [Performance Benchmarking](#performance-benchmarking)
+14. [GPU Simulation Labeling](#gpu-simulation-labeling)
+15. [Common Patterns & Idioms](#common-patterns--idioms)
 
 ### **🤖 Automation & Tooling**
-17. [Automated Syntax Standardization](#automated-syntax-standardization)
-18. [Compliance Checking and Reporting](#compliance-checking-and-reporting)
-19. [Before/After Transformation Examples](#beforeafter-transformation-examples)
-20. [Development Workflow Integration](#development-workflow-integration)
+16. [Automated Syntax Standardization](#automated-syntax-standardization)
+17. [Compliance Checking and Reporting](#compliance-checking-and-reporting)
+18. [Before/After Transformation Examples](#beforeafter-transformation-examples)
+19. [Development Workflow Integration](#development-workflow-integration)
 21. [Extending the Automation System](#extending-the-automation-system)
 
 ### **🔧 Compilation & Validation**
@@ -79,8 +187,8 @@ mojo --version
 max --version
 
 # Example output:
-# mojo 24.4.0 (2024-06-07)
-# MAX Engine 24.4.0
+# mojo 25.6.0.dev2025080505 (90bc2e90)
+# MAX Engine 25.6.0
 ```
 
 ### 📋 **Environment Information**
@@ -118,9 +226,10 @@ mojo run src/file.mojo
 ### 📋 **Version Compatibility Notes**
 
 1. **Mojo 24.4+**: `let` keyword removed, use direct assignment or `var`
-2. **MAX Engine**: GPU operations require compatible MAX Engine version
-3. **GPU Support**: Real GPU hardware available for acceleration
-4. **Import Syntax**: MAX Engine imports follow standard Mojo import patterns
+2. **Mojo 25.6+**: `owned` parameter convention renamed to `var`
+3. **MAX Engine**: GPU operations require compatible MAX Engine version
+4. **GPU Support**: Real GPU hardware available for acceleration
+5. **Import Syntax**: MAX Engine imports follow standard Mojo import patterns
 
 ---
 
@@ -194,6 +303,217 @@ elapsed_ms = Float64(elapsed_ns) / 1_000_000.0
 
 ---
 
+## 🖥️ Subprocess Execution & Shell Commands
+
+### ✅ **Subprocess Module Availability**
+
+Mojo provides subprocess functionality through the `subprocess` module, enabling execution of shell commands and external processes.
+
+**Module Location**: `/home/johnsoe1/dev/modular/mojo/stdlib/stdlib/subprocess/subprocess.mojo`
+
+### ✅ **Basic Subprocess Patterns**
+
+```mojo
+# Import subprocess functionality
+from subprocess import run
+
+# Execute simple command and get output
+fn get_version_info() -> String:
+    """Get version information using subprocess."""
+    try:
+        # Execute command and capture output
+        var output = run("mojo -v")
+        return String(output.strip())
+    except e:
+        return "Command execution failed"
+
+# Execute command with error handling
+fn execute_shell_command(command: String) -> String:
+    """Execute shell command with proper error handling."""
+    try:
+        var result = run(command)
+
+        # Process and return the output
+        if result:
+            return String(result.strip())
+        else:
+            return "No output from command"
+
+    except e:
+        return "Subprocess error: command failed"
+```
+
+### ✅ **Version Detection Patterns**
+
+```mojo
+# Detect Mojo version using subprocess
+@staticmethod
+fn _detect_mojo_version() -> String:
+    """Detect actual Mojo version using mojo -v command via subprocess."""
+    try:
+        from subprocess import run
+
+        # Execute mojo -v command to get actual version
+        var output = run("mojo -v")
+
+        # Parse output: "Mojo 25.6.0.dev2025073007 (1df3bfc1)"
+        if "Mojo " in output:
+            var parts = output.split("Mojo ")
+            if len(parts) > 1:
+                var version_part = String(parts[1].strip())
+                return version_part
+
+        return String(output.strip())
+
+    except e:
+        return "Version detection failed (subprocess error)"
+
+# Detect MAX Engine version using subprocess
+@staticmethod
+fn _detect_max_engine_version() -> String:
+    """Detect actual MAX Engine version using pixi list max command via subprocess."""
+    try:
+        from subprocess import run
+
+        # Execute pixi list max command
+        var output = run("pixi list max")
+
+        # Parse output to extract version from table format:
+        # max       25.6.0.dev2025073007  release  30 MiB    conda  ...
+        var lines = output.split("\n")
+        for i in range(len(lines)):
+            var line = lines[i].strip()
+            if line.startswith("max ") and not line.startswith("max-"):
+                var parts = line.split()
+                if len(parts) >= 2:
+                    return String(parts[1].strip())
+
+        return "MAX Engine version not found in pixi output"
+
+    except e:
+        return "Version detection failed (subprocess error)"
+```
+
+### ✅ **Common Shell Commands**
+
+```mojo
+# System information commands
+fn get_system_info() -> String:
+    """Get system information using common shell commands."""
+    try:
+        from subprocess import run
+
+        # Get OS information
+        var os_info = run("uname -a")
+
+        # Get CPU information (Linux)
+        var cpu_info = run("lscpu | grep 'Model name'")
+
+        # Get memory information (Linux)
+        var mem_info = run("free -h | grep Mem")
+
+        return "OS: " + String(os_info.strip()) + "\nCPU: " + String(cpu_info.strip())
+
+    except e:
+        return "System info detection failed"
+
+# Package management commands
+fn check_package_version(package_name: String) -> String:
+    """Check package version using pixi list."""
+    try:
+        from subprocess import run
+
+        var command = "pixi list " + package_name
+        var output = run(command)
+
+        # Parse package list output
+        var lines = output.split("\n")
+        for i in range(len(lines)):
+            var line = lines[i].strip()
+            if line.startswith(package_name + " "):
+                var parts = line.split()
+                if len(parts) >= 2:
+                    return String(parts[1].strip())
+
+        return "Package not found"
+
+    except e:
+        return "Package check failed"
+```
+
+### 📋 **Subprocess Best Practices**
+
+1. **Always use try-catch** for subprocess operations to handle execution failures
+2. **Import subprocess locally** within functions to avoid global dependencies
+3. **Process output strings** using `String()` conversion and `.strip()` for clean results
+4. **Parse structured output** (like tables) by splitting on newlines and whitespace
+5. **Provide meaningful fallbacks** when subprocess execution fails
+6. **Use specific commands** rather than complex shell pipelines for reliability
+7. **Handle empty output** cases gracefully
+8. **Strip whitespace** from command output to avoid formatting issues
+
+### ⚠️ **Subprocess Limitations & Considerations**
+
+```mojo
+# Current limitations and workarounds
+fn subprocess_considerations():
+    """Important considerations for subprocess usage."""
+
+    # 1. Error handling is essential
+    try:
+        var output = run("command_that_might_fail")
+        # Always handle potential failures
+    except e:
+        # Provide meaningful fallback behavior
+        print("Command failed, using fallback")
+
+    # 2. Output parsing requires string manipulation
+    var raw_output = run("complex_command")
+    var lines = raw_output.split("\n")
+    # Process each line as needed
+
+    # 3. Platform-specific commands need conditional logic
+    from sys.info import CompilationTarget
+
+    if CompilationTarget.is_linux():
+        var result = run("lscpu")  # Linux-specific
+    elif CompilationTarget.is_macos():
+        var result = run("sysctl -n machdep.cpu.brand_string")  # macOS-specific
+```
+
+### 🔍 **Example Usage Patterns**
+
+```mojo
+# Real-world example: System detection
+fn detect_system_capabilities() -> String:
+    """Detect system capabilities using subprocess commands."""
+    try:
+        from subprocess import run
+
+        # Get Mojo version
+        var mojo_version = run("mojo -v")
+
+        # Get MAX Engine version
+        var max_version = run("pixi list max")
+
+        # Get GPU information (NVIDIA)
+        var gpu_info = run("nvidia-smi --query-gpu=name --format=csv,noheader")
+
+        # Combine information
+        var report = "Mojo: " + String(mojo_version.strip()) + "\n"
+        report += "MAX Engine: " + String(max_version.split("\n")[1].split()[1]) + "\n"
+        report += "GPU: " + String(gpu_info.strip())
+
+        return report
+
+    except e:
+        return "System detection failed"
+```
+
+**Related Files**: `src/benchmarks/report_generator.mojo` (version detection functions)
+
+---
+
 ## 🔧 Function Definitions & Signatures
 
 ### ✅ **Standard Function Patterns**
@@ -218,7 +538,7 @@ fn init_system() raises -> None:
         msg = get_error_message(result)
         raise Error("Failed to initialize system: " + msg)
 
-# Function with complex parameters
+# Function with complex parameters (using var for owned parameters)
 fn create_resource(resource_id: ResourceId, context: UnsafePointer[NoneType], flags: Int32) raises -> ResourceHandle:
     """Create a new resource with specified parameters."""
     handle = external_call["resource_create", Int32](
@@ -228,6 +548,11 @@ fn create_resource(resource_id: ResourceId, context: UnsafePointer[NoneType], fl
         msg = get_error_message(handle)
         raise Error("Failed to create resource: " + msg)
     return handle
+
+# Function with var parameter (replaces owned)
+fn append(mut self, var page: AsDLPage):
+    """Append a page to the collection (var replaces owned)."""
+    self.pages.append(page^)  # Transfer ownership
 ```
 
 ### 📋 **Function Definition Rules**
@@ -698,11 +1023,64 @@ struct ResourceStruct(Copyable, Movable):
 
 ---
 
-## ⚠️ Error Handling Patterns
+## 🚨 **CRITICAL: Error Handling Patterns** ⚠️ **MUST APPLY EVERY TIME**
+
+**These error handling rules are MANDATORY for every Mojo file:**
+
+### **📋 MANDATORY ERROR HANDLING CHECKLIST:**
+- [ ] **Add `raises` annotations** only when required by compiler
+- [ ] **Use descriptive error messages** with context
+- [ ] **Avoid bare `except:` clauses** - use specific exception types
+- [ ] **Preserve exception context** when re-raising with bare `raise`
+- [ ] **Handle errors internally** when possible instead of propagating
+- [ ] **Document error conditions** in function docstrings with `Raises:` section
+- [ ] **Test error conditions** to ensure proper handling
 
 ### 🎯 **Core Principles**
 
 Mojo's error handling system is designed for performance and safety. Functions that can raise errors must be explicitly annotated with `raises`, and error propagation follows strict rules for maintaining error context and stack traces.
+
+### **✅ REQUIRED: Minimal `raises` Usage Pattern**
+```mojo
+# ✅ CORRECT: Start without raises, add only when compiler requires
+fn process_data(data: List[Float64]) -> ProcessResult:
+    """Process data with internal error handling."""
+    try:
+        validate_input(data)
+        result = perform_processing(data)
+        return result
+    except ValidationError as e:
+        print("Validation failed:", e)
+        return ProcessResult.create_error("Invalid input")
+    except ProcessingError as e:
+        print("Processing failed:", e)
+        return ProcessResult.create_error("Processing failed")
+
+# ✅ CORRECT: Use raises only when compiler demands it
+fn critical_operation(input: String) raises -> Result:
+    """Critical operation that must propagate errors."""
+    if input.is_empty():
+        raise Error("Input cannot be empty")  # Compiler requires raises
+
+    return perform_critical_task(input)  # This function also raises
+```
+
+### **❌ FORBIDDEN: Common Error Handling Mistakes**
+```mojo
+# ❌ INCORRECT: Bare except clause
+try:
+    risky_operation()
+except:  # Should specify exception type
+    handle_error()
+
+# ❌ INCORRECT: Unnecessary raises annotation
+fn simple_calculation(a: Int, b: Int) raises -> Int:  # raises not needed
+    """Simple calculation that doesn't actually raise."""
+    return a + b
+
+# ❌ INCORRECT: Poor error messages
+raise Error("Error")  # Should be: raise Error("Failed to process user input: invalid format")
+```
 
 ### 📝 **Design Note: main() Functions in Modules**
 
@@ -716,12 +1094,19 @@ fn main() raises:
     run_benchmark_suite()
 ```
 
+**🚨 CRITICAL PRESERVATION RULE:**
+- **NEVER REMOVE main() FUNCTIONS** unless explicitly requested by the user
+- **Always preserve existing main() functions** during syntax refactoring and compliance fixes
+- **main() functions are intentional design choices** by developers for standalone execution
+- **Compiler warnings about main() in packages are acceptable** and should be ignored
+
 **Important Notes:**
 - **Compiler Warning Expected**: `mojo: error: module does not contain a 'main' function` when building as library
 - **Ignore This Error**: This is an acceptable design pattern for executable scripts
 - **Use Cases**: Benchmark scripts, test files, demo applications, standalone utilities
 - **Benefits**: Allows modules to be both importable libraries AND executable scripts
 - **Pattern**: Include main() for standalone execution while keeping module functionality intact
+- **Preservation Priority**: main() functions have high preservation priority during refactoring
 
 ### ✅ **Exception Propagation Best Practices**
 
@@ -1240,17 +1625,113 @@ var resource_id = 12345  # Prefer: resource_id = 12345
 for i in range(num_iterations):  # Warning: 'i' never used
     process_data()
 var buffer = ctx.enqueue_create_buffer[DType.float64](size)  # Warning: 'buffer' never used
+
+# DON'T: Use var _ = for unused variables
+var _ = some_function()  # Incorrect - creates unnecessary variable
+var _ = 0.5  # Incorrect - should be removed entirely
 ```
 
-### 📋 **Variable Declaration Rules**
+### 🚨 **CRITICAL: Variable Declaration Rules** ⚠️ **MUST APPLY EVERY TIME**
 
-1. **Use direct assignment** for single-assignment variables that won't change
-2. **Use `var` only when** declaring without immediate assignment or when reassignment is needed
-3. **Use `alias`** for compile-time constants and type aliases
-4. **Use appropriate parameter conventions**: `borrowed` (default), `mut`, `owned`
-5. **Avoid `var`** for simple assignments where the value won't be modified
-6. **Use `_` for unused variables** to avoid compiler warnings (e.g., `for _ in range(n):`, `_ = unused_result`)
-7. **Remember**: All runtime variables in Mojo are mutable by default
+**These rules are MANDATORY and must be checked in every Mojo file:**
+
+#### **✅ REQUIRED: Use Direct Assignment (Preferred)**
+```mojo
+# ✅ CORRECT: Direct assignment for single-assignment variables
+result = external_call["system_init", Int32]()
+resource_id = external_call["resource_create", Int32](callback_id, context, flags)
+msg = SystemManager._get_error_message(result)
+optimization_result = self.parameter_optimizer.optimize_parameters()
+episode_results = self._run_training_episodes()
+final_results = TrainingResults(...)
+
+# ✅ CORRECT: Direct assignment for unit conversions and calculations
+cart_pos = la_pos_inches * INCHES_TO_METERS
+pend_angle = pend_pos_deg * DEGREES_TO_RADIANS
+pend_vel = pend_vel_deg_s * DEGREES_TO_RADIANS
+force = cmd_volts * ACTUATOR_GAIN
+```
+
+#### **✅ REQUIRED: Use `var` Only When Necessary**
+```mojo
+# ✅ CORRECT: Use var when declaring without immediate assignment
+var result: Int32
+if some_condition:
+    result = external_call["system_init", Int32]()
+else:
+    result = ERROR_SYSTEM
+
+# ✅ CORRECT: Use var when variable will be reassigned
+var counter = 0
+for i in range(10):
+    counter += i
+
+var total_success = 0.0
+var total_stability = 0.0
+for episode in episodes:
+    total_success += episode.success_rate    # Reassignment
+    total_stability += episode.stability     # Reassignment
+```
+
+#### **❌ FORBIDDEN: Unnecessary `var` Usage**
+```mojo
+# ❌ INCORRECT: Unnecessary var for single assignments
+var result = external_call["system_init", Int32]()  # Should be: result = ...
+var resource_id = 12345  # Should be: resource_id = 12345
+var episode_result = self._run_single_episode(episode)  # Should be: episode_result = ...
+
+# ❌ INCORRECT: Unnecessary var for unit conversions (COMMON VIOLATION)
+var cart_pos = la_pos_inches * INCHES_TO_METERS  # Should be: cart_pos = ...
+var pend_angle = pend_pos_deg * DEGREES_TO_RADIANS  # Should be: pend_angle = ...
+var pend_vel = pend_vel_deg_s * DEGREES_TO_RADIANS  # Should be: pend_vel = ...
+var force = cmd_volts * ACTUATOR_GAIN  # Should be: force = ...
+```
+
+#### **🎯 DETECTION RULE: Single Assignment Pattern**
+**A variable uses unnecessary `var` if:**
+1. **Declared and assigned on same line**: `var name = value`
+2. **Never reassigned**: Variable is only assigned once in its scope
+3. **Not conditional**: Assignment is not inside if/else or loop where declaration might be separate
+
+**AUTOMATION REQUIREMENT**: The automation script MUST detect and flag these patterns as violations.
+
+#### **🔄 CRITICAL: `var` Parameter Convention (Replaces `owned`)**
+
+**BREAKING CHANGE**: The `owned` argument convention has been renamed to `var` in recent Mojo versions.
+
+```mojo
+# ✅ CORRECT: Use var for owned parameters (NEW SYNTAX)
+fn append(mut self, var page: AsDLPage):
+    """Append a page to the collection (var replaces owned)."""
+    self.pages.append(page^)  # Transfer ownership
+
+fn process_data(var buffer: UnsafePointer[UInt8], size: Int):
+    """Process data with owned buffer (var replaces owned)."""
+    # Function takes ownership of buffer
+    defer buffer.free()  # Clean up owned resource
+    # ... process data ...
+
+# ❌ INCORRECT: Old owned syntax (DEPRECATED)
+fn append(mut self, owned page: AsDLPage):  # ← OLD SYNTAX
+    """This syntax is no longer supported."""
+    self.pages.append(page^)
+```
+
+**Migration Pattern:**
+- Replace `owned parameter_name:` with `var parameter_name:`
+- Functionality remains identical - only the keyword changes
+- Ownership transfer semantics are preserved
+- Memory management patterns stay the same
+
+#### **📋 MANDATORY CHECKLIST FOR EVERY FILE:**
+- [ ] **Scan all variable declarations** for unnecessary `var` usage
+- [ ] **Convert single-assignment variables** to direct assignment
+- [ ] **Keep `var` only for** variables that are reassigned or declared without assignment
+- [ ] **Remove unused variable declarations** entirely (don't assign to `_`)
+- [ ] **Use `_` only for loop indices** where the index isn't needed
+- [ ] **Use `alias`** for compile-time constants and type aliases
+- [ ] **Replace `owned` parameters** with `var` parameters
+- [ ] **Verify ownership transfer** semantics are preserved after migration
 
 **Note**: The `let` keyword was completely removed from Mojo in version 24.4 (June 2024).
 
@@ -1852,9 +2333,20 @@ fn get_buffer(mut self, size: Int) raises -> DeviceBuffer[DType.float64]:  # Ver
 
 ---
 
-## 📚 Documentation Standards
+## 🚨 **CRITICAL: Documentation Standards** ⚠️ **MUST APPLY EVERY TIME**
 
-### ✅ **Documentation Patterns**
+**These documentation rules are MANDATORY for every Mojo file:**
+
+### **📋 MANDATORY DOCUMENTATION CHECKLIST:**
+- [ ] **Module-level docstring** with comprehensive description
+- [ ] **All functions have multi-line docstrings** with Args/Returns/Raises
+- [ ] **All structs have detailed docstrings** with purpose and usage
+- [ ] **All public methods documented** with complete information
+- [ ] **No code examples in docstrings** (due to Mojo LSP parsing issues)
+- [ ] **Concise one-line docstrings** only for simple utility functions
+- [ ] **Meaningful inline comments** only where necessary
+
+### ✅ **REQUIRED: Documentation Patterns**
 
 ```mojo
 """
@@ -3752,7 +4244,8 @@ error: use of unknown declaration 'variable_name'
 - Typos in variable names
 
 **Solutions:**
-- Use `_` for intentionally unused variables
+- **Remove unused variable declarations entirely** (preferred approach)
+- Use `_` only for loop indices where the index isn't needed (`for _ in range(n):`)
 - Check variable scope and lifetime
 - Verify variable names are consistent
 
@@ -4256,8 +4749,28 @@ This section contains key insights and guidelines derived from development exper
 ### **Mojo Development Guidelines**
 - For Mojo command-line argument parsing, use 'from sys import argv' and 'args = argv()' to get command-line arguments as an iterable collection.
 - In Mojo, abs, max, and min functions are builtin and don't need to be imported from math module, and 'from time import now' is not required/available.
-- For Mojo main() functions in modules: include main() functions in benchmark/test/demo scripts for standalone execution - compiler warnings about main() in packages are acceptable design patterns.
+- For Mojo main() functions in modules: include main() functions in benchmark/test/demo scripts for standalone execution - compiler warnings about main() in packages are acceptable design patterns. NEVER REMOVE main() functions during refactoring unless explicitly requested by the user.
 - For Mojo design patterns: prefer Copyable/Movable traits over explicit __copyinit__/__moveinit__ methods when default behavior is sufficient. However, when refactoring existing code, only add these traits if: (a) replacing existing trivial __copyinit__/__moveinit__ implementations, (b) required by compiler to satisfy new dependencies from other code changes, or (c) the struct is being used in collections and currently fails compilation.
+
+### **Platform Detection Import Changes**
+- **BREAKING CHANGE**: Platform detection functions were moved from Mojo's `sys` module to `sys.info` as methods on the `CompilationTarget` struct.
+- **Solution**: Import `CompilationTarget` from `sys.info` and use its methods for platform detection.
+- **Hardware detection functions** (`has_nvidia_gpu_accelerator`, `num_physical_cores`, etc.) remain available in `sys`.
+- **Correct import pattern**:
+  ```mojo
+  # Hardware detection (still in sys)
+  from sys import has_nvidia_gpu_accelerator, num_physical_cores
+
+  # Platform detection (now in sys.info)
+  from sys.info import CompilationTarget
+
+  # Usage examples:
+  if CompilationTarget.is_linux():
+      print("Running on Linux")
+  if CompilationTarget.is_apple_m1():
+      print("Running on Apple M1")
+  var arch = String(CompilationTarget._arch())
+  ```
 
 ### **Mojo Codebase Cleanup**
 - For Mojo codebase cleanup: KEEP core production files in src/, essential utilities, tests in tests/ directories, working demos and benchmarks; DELETE duplicate implementations, experimental files, temporary development files like test_*_simple.mojo if better versions exist, outdated approaches, and broken/non-functional files.
@@ -4283,6 +4796,69 @@ This section contains key insights and guidelines derived from development exper
 - Trait additions should be driven by actual usage requirements (compilation failures, collection usage, API requirements) rather than theoretical completeness or pattern uniformity.
 - Prioritize code stability over pattern consistency in mature codebases - working code that follows older but valid patterns should remain unchanged unless modernization provides clear functional benefits.
 - When refactoring for syntax compliance, distinguish between "required fixes" (compilation errors, deprecated patterns) and "optional enhancements" (style preferences, theoretical improvements) - focus effort on required fixes first.
+- **NEVER REMOVE main() FUNCTIONS** during automated refactoring unless explicitly requested - main() functions are intentional design choices for standalone execution and must be preserved.
+
+---
+
+## 🎯 **FINAL COMPLIANCE VERIFICATION**
+
+**Before considering any Mojo file complete, verify ALL of the following:**
+
+### **📋 COMPLETE COMPLIANCE CHECKLIST:**
+
+#### **🔥 Core Syntax (CRITICAL)**
+- [ ] **Variable declarations**: All unnecessary `var` removed, direct assignment used
+- [ ] **Function signatures**: All parameters typed, returns specified, `raises` only when needed
+- [ ] **Error handling**: Proper `raises` annotations, descriptive error messages, no bare except
+- [ ] **Import organization**: Clean imports, no unused imports, proper organization
+- [ ] **Struct design**: Proper traits, initialization patterns, method organization
+
+#### **📚 Documentation (CRITICAL)**
+- [ ] **Module docstring**: Comprehensive description of module purpose and functionality
+- [ ] **Function docstrings**: Multi-line format with Args/Returns/Raises sections
+- [ ] **Struct docstrings**: Detailed purpose, attributes, and usage information
+- [ ] **Method docstrings**: Complete documentation for all public methods
+- [ ] **No code examples**: Avoided in docstrings due to Mojo LSP parsing issues
+
+#### **🎨 Design Patterns (CRITICAL)**
+- [ ] **Naming conventions**: Consistent snake_case, descriptive names
+- [ ] **Code organization**: Logical structure, proper grouping
+- [ ] **Performance patterns**: Efficient implementations
+- [ ] **Memory management**: Proper ownership and lifetime handling
+- [ ] **Testing integration**: Code designed for testability
+
+#### **🔧 Technical Validation (CRITICAL)**
+- [ ] **Compilation**: File compiles without errors or warnings
+- [ ] **Functionality**: All features work as expected
+- [ ] **Automation compliance**: Passes `update_mojo_syntax.mojo --validate`
+- [ ] **Performance**: No performance regressions
+- [ ] **Integration**: Works with existing codebase
+
+### **🚨 FINAL VERIFICATION COMMAND:**
+```bash
+# Run this command and ensure 100% compliance
+mojo run mojo_max_syntax/update_mojo_syntax.mojo --validate <your_file.mojo>
+
+# Expected result: "Compliance Score: 100.0 %" with 0 violations
+```
+
+### **✅ SUCCESS CRITERIA:**
+- **100% compliance score** from automation script
+- **Zero violations** of any kind
+- **All checklists completed** with every item checked
+- **File compiles and runs** without issues
+- **All functionality tested** and working
+
+**Only when ALL criteria are met is the Mojo file considered complete.**
+
+### **🚨 ENFORCEMENT POLICY:**
+- **No exceptions** to any guideline
+- **No partial compliance** accepted
+- **No "I'll fix it later"** - fix it now
+- **No shortcuts** - every rule must be followed
+- **100% compliance** is the only acceptable standard
+
+**This document serves as the definitive standard for all Mojo development. Every guideline, check, and design pattern MUST be applied systematically to every Mojo file, with no exceptions.**
 
 ---
 
