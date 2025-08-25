@@ -5,6 +5,7 @@
 *.dll
 build/
 dist/
+kgen*
 
 # Backup files from automation script
 *.backup

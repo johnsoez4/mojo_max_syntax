@@ -1,0 +1,13 @@
+[workspace]
+authors = ["johnsoez4 <johnsoez4@gmail.com>"]
+channels = ["https://conda.modular.com/max-nightly", "conda-forge"]
+name = "mojo_max_syntax"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+update = "sh update.sh"
+
+[dependencies]
+mojo = "*"
+# max = "*"

@@ -1,10 +1,13 @@
-##Prompts 2025-08-15
-- What is the purpose of @<filepath>? Is it necessary/redundant? Can it be deleted?
-- Apply the user guidelines and rules to refactor @<filepath>
-- Refactor @<filepath> so it actually tests from the project's source code.
-- Commit the project changes.
-- Delete build artifacts (e.g. executables) generated during the editing session.
-- Refactor the code to actually use Mojo's built-in benchmark API. Reference `from benchmark import...`.
+##Prompts
+- What is the purpose of @<filepath>? Is it necessary/redundant? Can it be deleted? Make your response clear but brief.
+- Apply the user guidelines and rules to refactor @<filepath>. Make your response clear but brief.
+- Refactor @<filepath> so it actually tests from the project's source code. Make your response clear but brief.
+- Commit the project changes. Make your response clear but brief.
+- Delete build artifacts (e.g. executables) generated during the editing session. Make your response clear but brief.
+- Refactor the code to actually use Mojo's built-in benchmark API. Reference `from benchmark import...`. Make your response clear but brief.
+- Refactor @<filenpath> so it is general to all GPU acceleration hardware. Make your response clear but brief.
+- Delete @<filepath>. Make your response clear but brief.
+- Add a `main()` function to allow for @<filepath> to be executed independent from other source files. Make your response clear but brief.
 
 ##Prompt 2025-08-15
 Perform a comprehensive dead code analysis on the file @<filepath>> to identify and remove unused functions and methods. Specifically:
