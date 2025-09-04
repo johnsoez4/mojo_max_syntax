@@ -24,4 +24,6 @@ Thumbs.db
 # Test outputs
 test_results/
 compliance_reports/
-*.log
+*.log# pixi environments
+.pixi/*
+!.pixi/config.toml
