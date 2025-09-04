@@ -9,5 +9,4 @@ version = "0.1.0"
 update = "sh update.sh"
 
 [dependencies]
-mojo = "*"
-# max = "*"
+mojo = "<1.0.0"
